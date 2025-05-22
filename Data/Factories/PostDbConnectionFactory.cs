@@ -3,7 +3,7 @@ using Npgsql;
 
 namespace WatchDog.Data.Factories;
 
-public class PostDbConnectionFactory
+public class PostDbConnectionFactory:IDbConnectionFactory
 {
     private readonly string _connectionString;
     
