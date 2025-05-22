@@ -3,12 +3,10 @@ using System.Collections.Generic;
 
 namespace WatchDog.Models;
 
-public class Task
+public class Task:AuditableEntity
 {
-    public int Id { get; set; }
     public required string TaskDescription { get; set; }
     public string? Remarks { get; set; }
-    public DateTime CreatedDate { get; set; }
     public DateTime? StartDate { get; set; }
     public DateTime? CompletedDate { get; set; }
     public int PercentageComplete { get; set; }

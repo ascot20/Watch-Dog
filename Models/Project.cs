@@ -3,9 +3,8 @@ using System.Collections.Generic;
 
 namespace WatchDog.Models;
 
-public class Project
+public class Project:AuditableEntity
 {
-    public int Id { get; set; }
     public required string Title { get; set; }
     public string? Description { get; set; }
     public DateTime StartDate { get; set; }

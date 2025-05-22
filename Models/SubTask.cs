@@ -3,11 +3,9 @@ using System.Collections.Generic;
 
 namespace WatchDog.Models;
 
-public class SubTask
+public class SubTask:AuditableEntity
 {
-    public int Id { get; set; }
     public required string Description { get; set; }
-    public DateTime CreatedDate { get; set; }
     public DateTime? StartDate { get; set; }
     public DateTime? CompletedDate { get; set; }
     public SubTaskStatus Status { get; set; }
