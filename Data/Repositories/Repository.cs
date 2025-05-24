@@ -40,11 +40,6 @@ public abstract class Repository<T> : IRepository<T> where T:BaseEntity
         return await Task.FromResult(0);
     }
     
-    public virtual async Task UpdateAsync(T entity)
-    {
-        await Task.CompletedTask;
-    }
-    
     public virtual async Task DeleteAsync(int id)
     {
         using var connection = this._dbConnectionFactory.CreateConnection();

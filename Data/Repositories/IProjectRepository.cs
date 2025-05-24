@@ -9,6 +9,8 @@ public interface IProjectRepository: IRepository<Project>
 {
     Task<IEnumerable<Project>> GetAllProjectsAsync();
     Task<IEnumerable<Project>> GetProjectsByUserIdAsync(int userId);
+    Task<bool> AddUserToProjectAsync(int projectId, int userId);
+    Task<bool> RemoveUserFromProjectAsync(int projectId, int userId);
     Task<Project?> GetProjectWithUsersAsync(int projectId);
     Task<Project?> GetProjectWithTasksAsync(int projectId);
     Task<Project?> GetCompleteProjectAsync(int projectId);
