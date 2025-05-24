@@ -7,15 +7,14 @@ namespace WatchDog.Data.Repositories;
 
 public interface IProjectRepository: IRepository<Project>
 {
-    Task<IEnumerable<Project>> GetAllProjectsAsync();
     Task<IEnumerable<Project>> GetProjectsByUserIdAsync(int userId);
     Task<bool> AddUserToProjectAsync(int projectId, int userId);
     Task<bool> RemoveUserFromProjectAsync(int projectId, int userId);
-    Task<Project?> GetProjectWithUsersAsync(int projectId);
+    Task<Project?> GetProjectWithMembersAsync(int projectId);
     Task<Project?> GetProjectWithTasksAsync(int projectId);
-    Task<Project?> GetCompleteProjectAsync(int projectId);
-    Task<Project?> GetUncompletedProjectAsync(int projectId);
-    Task<IEnumerable<Project>> SearchProjectsByTitleAsync(string titleTerm);
-    Task<IEnumerable<Project>> SearchProjectsByMemberNameAsync(string memberNameTerm);
-    Task<IEnumerable<Project>> SearchProjectsByDateAsync(DateTime dateTerm);
+    Task<IEnumerable<Project>> SearchProjectsAsync(
+        string? titleTerm = null,
+        string? memberNameTerm = null,
+        ProjectStatus? status = null
+        );
 }

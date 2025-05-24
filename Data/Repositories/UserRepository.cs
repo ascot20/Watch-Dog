@@ -9,6 +9,7 @@ namespace WatchDog.Data.Repositories;
 
 public class UserRepository: Repository<User>, IUserRepository
 {
+    
     public UserRepository(IDbConnectionFactory dbConnectionFactory)
         : base(dbConnectionFactory, "Users")
     {
@@ -19,17 +20,17 @@ public class UserRepository: Repository<User>, IUserRepository
     {
         using var connection = this._dbConnectionFactory.CreateConnection();
         return await connection.QueryFirstOrDefaultAsync<User>(
-            $"SELECT * FROM {this._tableName} WHERE Email = @Email",
+            "SELECT * FROM Users WHERE Email = @Email",
             new { Email = email }
         );
     }
 
-    public async Task<User?> GetUserWithAssignedTasksAsync(int userId, string taskTable)
+    public async Task<User?> GetUserWithAssignedTasksAsync(int userId)
     {
         using var connection = this._dbConnectionFactory.CreateConnection();
 
         var user = await connection.QueryFirstOrDefaultAsync<User>(
-            $"SELECT * FROM {this._tableName}  WHERE Id = @UserId",
+            "SELECT * FROM Users  WHERE Id = @UserId",
             new { UserId = userId }
         );
 
@@ -39,7 +40,7 @@ public class UserRepository: Repository<User>, IUserRepository
         }
 
         var tasks = await connection.QueryAsync<Models.Task>(
-            $"SELECT * FROM {taskTable} WHERE AssignedUserId = @UserId",
+            "SELECT * FROM Tasks WHERE AssignedUserId = @UserId",
             new { UserId = userId }
             );
 
@@ -48,49 +49,36 @@ public class UserRepository: Repository<User>, IUserRepository
         return user;
     }
 
-    public async Task<IEnumerable<User>> GetUsersByProjectIdAsync(int projectId, string userProjectTable)
+    public async Task<IEnumerable<User>> GetUsersByProjectIdAsync(int projectId)
     {
         using var connection = this._dbConnectionFactory.CreateConnection();
         
         return await connection.QueryAsync<User>(
-            @$"SELECT * 
-               FROM {this._tableName} 
-               JOIN {userProjectTable} ON {this._tableName}.Id = {userProjectTable}.UserId
-               wHERE {userProjectTable}.ProjectId = @ProjectId",
+            @"SELECT * 
+               FROM Users 
+               JOIN UserProjects ON Users.Id = UserProjects.UserId
+               wHERE UserProjects.ProjectId = @ProjectId",
             new { ProjectId = projectId }
         );
     }
 
-    public async System.Threading.Tasks.Task UpdatePasswordAsync(int userId, string newPasswordHash)
-    {
-        using var connection = this._dbConnectionFactory.CreateConnection();
-
-        var query = @$"UPDATE {this._tableName} 
-                       SET PasswordHash = @PasswordHash 
-                       WHERE Id = @Id";
-
-        await connection.ExecuteAsync(query, new
-        {
-            Id = userId,
-            PasswordHash = newPasswordHash
-        });
-    }
-
     public override async Task<int> CreateAsync(User user)
     {
+        await base.CreateAsync(user);
+        
         using var connection = this._dbConnectionFactory.CreateConnection();
 
-        var query = $@"
-            INSERT INTO {this._tableName}
-            VALUES (@Username, @Email, @PasswordHash, @Role);
-            SELECT CAST(SCOPE_IDENTITY() AS INT)";
+        var query = @"
+            INSERT INTO Users (Username, Email, PasswordHash, Role, CreatedDate)
+            VALUES (@Username, @Email, @PasswordHash, @Role, @CreatedDate);
+            RETURNING Id";
 
         return await connection.QuerySingleAsync<int>(query, new
         {
             user.Username,
             user.Email,
             user.PasswordHash,
-            user.Role
+            Role = (int) user.Role
         });
     }
     

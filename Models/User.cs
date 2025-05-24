@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace WatchDog.Models;
 
-public class User:BaseEntity
+public class User: AuditableEntity
 {
     public required string Username { get; set; }
     public required string Email { get; set; }

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Dapper;
@@ -37,6 +38,11 @@ public abstract class Repository<T> : IRepository<T> where T:BaseEntity
 
     public virtual async Task<int> CreateAsync(T entity)
     {
+        if (entity is AuditableEntity auditableEntity)
+        {
+            auditableEntity.CreatedDate = DateTime.UtcNow;
+        }
+        
         return await Task.FromResult(0);
     }
     
