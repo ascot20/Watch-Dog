@@ -16,7 +16,27 @@ public class UserRepository: Repository<User>, IUserRepository
         
     }
 
-    public async Task<User?> GetUserByEmailAsync(string email)
+    public override async Task<int> CreateAsync(User user)
+    {
+        await base.CreateAsync(user);
+        
+        using var connection = this._dbConnectionFactory.CreateConnection();
+
+        var query = @"
+            INSERT INTO Users (Username, Email, PasswordHash, Role, CreatedDate)
+            VALUES (@Username, @Email, @PasswordHash, @Role, @CreatedDate);
+            RETURNING Id";
+
+        return await connection.QuerySingleAsync<int>(query, new
+        {
+            user.Username,
+            user.Email,
+            user.PasswordHash,
+            Role = (int) user.Role
+        });
+    }
+    
+    public async Task<User?> GetByEmailAsync(string email)
     {
         using var connection = this._dbConnectionFactory.CreateConnection();
         return await connection.QueryFirstOrDefaultAsync<User>(
@@ -25,7 +45,7 @@ public class UserRepository: Repository<User>, IUserRepository
         );
     }
 
-    public async Task<User?> GetUserWithAssignedTasksAsync(int userId)
+    public async Task<User?> GetWithAssignedTasksAsync(int userId)
     {
         using var connection = this._dbConnectionFactory.CreateConnection();
 
@@ -48,38 +68,4 @@ public class UserRepository: Repository<User>, IUserRepository
 
         return user;
     }
-
-    public async Task<IEnumerable<User>> GetUsersByProjectIdAsync(int projectId)
-    {
-        using var connection = this._dbConnectionFactory.CreateConnection();
-        
-        return await connection.QueryAsync<User>(
-            @"SELECT * 
-               FROM Users 
-               JOIN UserProjects ON Users.Id = UserProjects.UserId
-               wHERE UserProjects.ProjectId = @ProjectId",
-            new { ProjectId = projectId }
-        );
-    }
-
-    public override async Task<int> CreateAsync(User user)
-    {
-        await base.CreateAsync(user);
-        
-        using var connection = this._dbConnectionFactory.CreateConnection();
-
-        var query = @"
-            INSERT INTO Users (Username, Email, PasswordHash, Role, CreatedDate)
-            VALUES (@Username, @Email, @PasswordHash, @Role, @CreatedDate);
-            RETURNING Id";
-
-        return await connection.QuerySingleAsync<int>(query, new
-        {
-            user.Username,
-            user.Email,
-            user.PasswordHash,
-            Role = (int) user.Role
-        });
-    }
-    
 }

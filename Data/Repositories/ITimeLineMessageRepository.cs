@@ -7,10 +7,10 @@ namespace WatchDog.Data.Repositories;
 
 public interface ITimeLineMessageRepository: IRepository<TimeLineMessage>
 {
-    Task<IEnumerable<TimeLineMessage>> GetMessagesByProjectIdAsync(int projectId);
-    Task<IEnumerable<TimeLineMessage>> GetMessagesByCreatorIdAsync(int creatorId);
-    Task<IEnumerable<TimeLineMessage>> GetMessagesByTypeAsync(MessageType type);
-    Task<IEnumerable<TimeLineMessage>> GetMessagesByDateRangeAsync(DateTime startDate, DateTime endDate);
-    Task<TimeLineMessage?> GetMessageWithCreatorAsync(int messageId);
-    Task<int> GetTotalMessageCountForProjectAsync(int projectId);
+    Task<IEnumerable<TimeLineMessage>> GetByProjectIdAsync(int projectId);
+    Task<IEnumerable<TimeLineMessage>> GetByCreatorIdAsync(int creatorId);
+    Task<IEnumerable<TimeLineMessage>> GetByTypeAsync(MessageType type);
+    Task<IEnumerable<TimeLineMessage>> GetByDateRangeAsync(DateTime startDate, DateTime endDate);
+    Task<TimeLineMessage?> GetWithCreatorAsync(int messageId);
+    Task<int> GetTotalCountForProjectAsync(int projectId);
 }

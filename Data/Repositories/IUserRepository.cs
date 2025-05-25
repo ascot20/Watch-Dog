@@ -7,7 +7,6 @@ namespace WatchDog.Data.Repositories;
 
 public interface IUserRepository: IRepository<User>
 {
-    Task<User?> GetUserByEmailAsync(string email);
-    Task<User?> GetUserWithAssignedTasksAsync(int userId);
-    Task<IEnumerable<User>> GetUsersByProjectIdAsync(int projectId);
+    Task<User?> GetByEmailAsync(string email);
+    Task<User?> GetWithAssignedTasksAsync(int userId);
 }

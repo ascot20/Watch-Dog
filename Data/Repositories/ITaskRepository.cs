@@ -6,9 +6,9 @@ namespace WatchDog.Data.Repositories;
 
 public interface ITaskRepository: IRepository<Task>
 {
-    Task<IEnumerable<Task>> GetTasksByProjectIdAsync(int projectId);
-    Task<IEnumerable<Task>> GetTasksByAssignedUserIdAsync(int userId);
-    Task<Task?> GetTaskWithAssigneeAsync(int taskId);
-    Task<bool> AssignTaskToUserAsync(int taskId, int userId);
-    Task<bool> UnassignTaskAsync(int taskId);
+    Task<IEnumerable<Models.Task>> GetByProjectIdAsync(int projectId);
+    Task<IEnumerable<Models.Task>> GetByAssignedUserIdAsync(int userId);
+    Task<Task?> GetWithAssigneeAsync(int taskId);
+    Task UpdateAssigneeAsync(int taskId, int? assigneeId);
+    Task UpdatePercentageCompleteAsync(int taskId, int percentageComplete);
 }

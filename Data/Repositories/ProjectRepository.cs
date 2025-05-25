@@ -7,12 +7,11 @@ using WatchDog.Models;
 
 namespace WatchDog.Data.Repositories;
 
-public class ProjectRepository: Repository<Project>, IProjectRepository
+public class ProjectRepository : Repository<Project>, IProjectRepository
 {
     public ProjectRepository(IDbConnectionFactory dbConnectionFactory)
         : base(dbConnectionFactory, "Projects")
     {
-        
     }
 
     public override async Task<int> CreateAsync(Project project)
@@ -31,11 +30,11 @@ public class ProjectRepository: Repository<Project>, IProjectRepository
             project.CreatedDate,
             project.StartDate,
             project.EndDate,
-            Status = (int) project.Status,
+            Status = (int)project.Status,
         });
     }
 
-    public async Task<IEnumerable<Project>> GetProjectsByUserIdAsync(int userId)
+    public async Task<IEnumerable<Project>> GetByUserIdAsync(int userId)
     {
         using var connection = this._dbConnectionFactory.CreateConnection();
         return await connection.QueryAsync<Project>($@"
@@ -46,29 +45,13 @@ public class ProjectRepository: Repository<Project>, IProjectRepository
         );
     }
 
-    public Task<bool> AddUserToProjectAsync(int projectId, int userId)
+    public Task<Project?> GetWithMembersAsync(int projectId)
     {
         throw new System.NotImplementedException();
     }
 
-    public Task<Project?> GetProjectWithMembersAsync(int projectId)
+    public Task<Project?> GetWithTasksAsync(int projectId)
     {
         throw new System.NotImplementedException();
-    }
-
-    public Task<Project?> GetProjectWithTasksAsync(int projectId)
-    {
-        throw new System.NotImplementedException();
-    }
-
-
-    public Task<bool> RemoveUserFromProjectAsync(int projectId, int userId)
-    {
-        throw new System.NotImplementedException();
-    }
-
-    public Task<IEnumerable<Project>> SearchProjectsAsync(string? titleTerm = null, string? memberNameTerm = null, ProjectStatus? status = null)
-    {
-        throw new NotImplementedException();
     }
 }
