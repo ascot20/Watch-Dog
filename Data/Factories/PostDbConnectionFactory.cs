@@ -9,7 +9,7 @@ public class PostDbConnectionFactory:IDbConnectionFactory
     
     public PostDbConnectionFactory(string connectionString)
     {
-       this._connectionString = connectionString;
+        this._connectionString = connectionString;
     }
 
     public IDbConnection CreateConnection()

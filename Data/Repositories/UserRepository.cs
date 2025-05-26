@@ -32,7 +32,7 @@ public class UserRepository: Repository<User>, IUserRepository
             user.Username,
             user.Email,
             user.PasswordHash,
-            Role = (int) user.Role
+            user.Role
         });
     }
     
