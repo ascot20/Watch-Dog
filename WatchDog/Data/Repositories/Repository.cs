@@ -21,11 +21,20 @@ public abstract class Repository<T> : IRepository<T> where T:BaseEntity
 
     public virtual async Task<T?> GetByIdAsync(int id)
     {
-        using var connection = this._dbConnectionFactory.CreateConnection();
-        return await connection.QueryFirstOrDefaultAsync<T>(
-            $"SELECT * FROM {_tableName} WHERE Id = @Id",
-            new {Id = id}
-        );
+        try
+        {
+            using var connection = this._dbConnectionFactory.CreateConnection();
+
+            return await connection.QueryFirstOrDefaultAsync<T>(
+                $"SELECT * FROM {_tableName} WHERE Id = @Id",
+                new {Id = id}
+            );
+        }
+        catch (Exception e)
+        {
+            throw new Exception($"Database error in {nameof(GetByIdAsync)}: {e.Message} ");
+        }
+        
     }
 
     public virtual async Task<IEnumerable<T>> GetAllAsync()
