@@ -4,14 +4,20 @@ services:
     container_name: watchdog-db
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: watchdog
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+      POSTGRES_DB: watchdog_db
+    secrets:
+      - db_password
     ports:
       - "5432:5432"
     volumes:
       - ./Scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
       - postgres_data:/var/lib/postgresql/data
+
+secrets:
+  db_password:
+    file: ./db_password.txt
 
 volumes:
   postgres_data:
