@@ -9,5 +9,5 @@ public class ProgressionMessage:Message
     
     //Navigation properties
     public SubTask? SubTask { get; set; }
-    public User? Author { get; set; }
+    
 }

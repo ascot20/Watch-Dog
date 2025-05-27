@@ -9,5 +9,4 @@ public class TimeLineReply:Message
     
     //Navigation properties
     public TimeLineMessage? TimeLineMessage { get; set; }
-    public User? Author { get; set; }
 }

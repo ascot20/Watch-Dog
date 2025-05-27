@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -18,54 +19,97 @@ public class UserRepository: Repository<User>, IUserRepository
 
     public override async Task<int> CreateAsync(User user)
     {
-        await base.CreateAsync(user);
-        
-        using var connection = this._dbConnectionFactory.CreateConnection();
-
-        var query = @"
-            INSERT INTO Users (Username, Email, PasswordHash, Role, CreatedDate)
-            VALUES (@Username, @Email, @PasswordHash, @Role, @CreatedDate);
-            RETURNING Id";
-
-        return await connection.QuerySingleAsync<int>(query, new
+        if (user == null)
         {
-            user.Username,
-            user.Email,
-            user.PasswordHash,
-            user.Role
-        });
+            throw new ArgumentNullException(nameof(user), "User cannot be null");
+        }
+    
+        if (string.IsNullOrWhiteSpace(user.Username))
+        {
+            throw new ArgumentException("Username cannot be empty", nameof(user));
+        }
+    
+        if (string.IsNullOrWhiteSpace(user.Email))
+        {
+            throw new ArgumentException("Email cannot be empty", nameof(user));
+        }
+    
+        if (string.IsNullOrWhiteSpace(user.PasswordHash))
+        {
+            throw new ArgumentException("Password cannot be empty", nameof(user));
+        }
+
+        try
+        {
+            await base.CreateAsync(user);
+        
+            using var connection = this._dbConnectionFactory.CreateConnection();
+
+            var query = @"
+            INSERT INTO Users (Username, Email, PasswordHash, Role, CreatedDate)
+            VALUES (@Username, @Email, @PasswordHash, @Role, @CreatedDate)
+            RETURNING Id;";
+
+            return await connection.QuerySingleAsync<int>(query, new
+            {
+                user.Username,
+                user.Email,
+                user.PasswordHash,
+                user.Role
+            });
+        }
+        catch (Exception e)
+        {
+            throw new Exception($"Database error in {nameof(CreateAsync)}: {e.Message} ");
+        }
+        
     }
     
     public async Task<User?> GetByEmailAsync(string email)
     {
-        using var connection = this._dbConnectionFactory.CreateConnection();
-        return await connection.QueryFirstOrDefaultAsync<User>(
-            "SELECT * FROM Users WHERE Email = @Email",
-            new { Email = email }
-        );
-    }
-
-    public async Task<User?> GetWithAssignedTasksAsync(int userId)
-    {
-        using var connection = this._dbConnectionFactory.CreateConnection();
-
-        var user = await connection.QueryFirstOrDefaultAsync<User>(
-            "SELECT * FROM Users  WHERE Id = @UserId",
-            new { UserId = userId }
-        );
-
-        if (user == null)
+        if (string.IsNullOrWhiteSpace(email))
         {
-            return null;
+            throw new ArgumentException("Email cannot be null or empty", nameof(email));
         }
 
-        var tasks = await connection.QueryAsync<Models.Task>(
-            "SELECT * FROM Tasks WHERE AssignedUserId = @UserId",
-            new { UserId = userId }
+        try
+        {
+            using var connection = this._dbConnectionFactory.CreateConnection();
+            return await connection.QueryFirstOrDefaultAsync<User>(
+                "SELECT * FROM Users WHERE Email = @Email",
+                new { Email = email }
             );
+        }
+        catch (Exception e)
+        {
+            throw new Exception($"Database error in {nameof(GetByEmailAsync)}: {e.Message} ");
+        }
+        
+    }
 
-        user.AssignedTasks = tasks.ToList();
+    public override async Task<bool> UpdateAsync(User user)
+    {
+        try
+        {
+            using var connection = this._dbConnectionFactory.CreateConnection();
 
-        return user;
+            var query = @"
+                UPDATE Users
+                SET PasswordHash = @PasswordHash
+                WHERE Id = @Id";
+
+            int rowsAffected = await connection.ExecuteAsync(query, new
+            {
+                user.PasswordHash,
+                user.Id
+            });
+            
+            return rowsAffected > 0;
+        }
+        
+        catch (Exception e)
+        {
+            throw new Exception($"Database error in {nameof(UpdateAsync)}: {e.Message} ");
+        }
     }
 }

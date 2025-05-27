@@ -39,10 +39,18 @@ public abstract class Repository<T> : IRepository<T> where T:BaseEntity
 
     public virtual async Task<IEnumerable<T>> GetAllAsync()
     {
-        using var connection = this._dbConnectionFactory.CreateConnection();
-        return await connection.QueryAsync<T>(
-            $"SELECT * FROM {_tableName}"
-        );
+        try
+        {
+            using var connection = this._dbConnectionFactory.CreateConnection();
+            return await connection.QueryAsync<T>(
+                $"SELECT * FROM {_tableName}"
+            );
+        }
+        catch (Exception e)
+        {
+            throw new Exception($"Database error in {nameof(GetAllAsync)}: {e.Message} ");
+        }
+        
     }
 
     public virtual async Task<int> CreateAsync(T entity)
@@ -54,14 +62,37 @@ public abstract class Repository<T> : IRepository<T> where T:BaseEntity
         
         return await Task.FromResult(0);
     }
-    
+
+    public virtual async Task<bool> UpdateAsync(T entity)
+    {
+        if (entity == null)
+        {
+            throw new ArgumentNullException(nameof(entity), "Entity cannot be null");
+        }
+
+        if (entity.Id <= 0)
+        {
+            throw new ArgumentException("Entity ID must be a positive number", nameof(entity));
+        }
+        
+        return await Task.FromResult(false);
+    }
+
     public virtual async Task DeleteAsync(int id)
     {
-        using var connection = this._dbConnectionFactory.CreateConnection();
-        await connection.ExecuteAsync(
-            $"DELETE FROM {_tableName} WHERE Id = @Id",
-            new { Id = id }
-        );
+        try
+        {
+            using var connection = this._dbConnectionFactory.CreateConnection();
+            await connection.ExecuteAsync(
+                $"DELETE FROM {_tableName} WHERE Id = @Id",
+                new { Id = id }
+            );
+        }
+        catch (Exception e)
+        {
+            throw new Exception($"Database error in {nameof(DeleteAsync)}: {e.Message} ");
+        }
+        
     }
     
 }

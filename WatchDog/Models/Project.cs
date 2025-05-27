@@ -13,7 +13,7 @@ public class Project:AuditableEntity
     
     //Navigation properties
     public ICollection<Task> Tasks {get;set;} = new List<Task>();
-    public ICollection<UserProject> ProjectMembers {get;set;} = new List<UserProject>();
+    public ICollection<User> ProjectMembers {get;set;} = new List<User>();
     public ICollection<TimeLineMessage> TimeLineMessages {get;set;} = new List<TimeLineMessage>();
     
 }

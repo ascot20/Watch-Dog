@@ -7,6 +7,6 @@ namespace WatchDog.Data.Repositories;
 public interface ITimeLineReplyRepository: IRepository<TimeLineReply>
 {
     Task<IEnumerable<TimeLineReply>> GetByMessageIdAsync(int messageId);
-    Task<TimeLineReply?> GetWithCreatorAsync(int replyId);
+    Task<IEnumerable<TimeLineReply>> GetByCreatorIdAsync(int creatorId);
     Task<int> GetTotalCountForMessageAsync(int messageId);
 }

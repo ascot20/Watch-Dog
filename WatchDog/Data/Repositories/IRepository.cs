@@ -10,5 +10,6 @@ public interface IRepository<T> where T:BaseEntity
     Task<T?> GetByIdAsync(int id);
     Task<IEnumerable<T>> GetAllAsync();
     Task<int> CreateAsync(T entity);
+    Task<bool> UpdateAsync(T entity);
     Task DeleteAsync(int id);
 }

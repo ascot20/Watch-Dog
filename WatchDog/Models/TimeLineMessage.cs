@@ -13,7 +13,6 @@ public class TimeLineMessage:Message
     
     //Navigation properties
     public Project? Project {get;set;}
-    public User? Author {get;set;}
     public ICollection<TimeLineReply> Replies {get;set;} = new List<TimeLineReply>();
 }
 

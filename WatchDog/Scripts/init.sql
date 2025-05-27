@@ -45,31 +45,30 @@ CREATE TABLE IF NOT EXISTS SubTasks (
     CreatedDate TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS Messages (
-    Id SERIAL PRIMARY KEY,
-    Content TEXT NOT NULL,
-    CreatedDate TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    AuthorId INT REFERENCES Users(Id)
-);
-
 CREATE TABLE IF NOT EXISTS TimeLineMessages (
     Id SERIAL PRIMARY KEY,
-    MessageId INT NOT NULL REFERENCES Messages(Id) ON DELETE CASCADE,
+    Content TEXT NOT NULL,
     Type message_type NOT NULL,
     IsPinned BOOLEAN NOT NULL DEFAULT FALSE,
-    ProjectId INT NOT NULL REFERENCES Projects(Id) ON DELETE CASCADE
+    ProjectId INT NOT NULL REFERENCES Projects(Id) ON DELETE CASCADE,
+    AuthorId INT REFERENCES Users(Id),
+    CreatedDate TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS TimeLineReplies (
     Id SERIAL PRIMARY KEY,
-    MessageId INT NOT NULL REFERENCES Messages(Id) ON DELETE CASCADE,
-    TimeLineMessageId INT NOT NULL REFERENCES TimeLineMessages(Id) ON DELETE CASCADE
+    Content TEXT NOT NULL,
+    TimeLineMessageId INT NOT NULL REFERENCES TimeLineMessages(Id) ON DELETE CASCADE,
+    AuthorId INT REFERENCES Users(Id),
+    CreatedDate TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS ProgressionMessages (
     Id SERIAL PRIMARY KEY,
-    MessageId INT NOT NULL REFERENCES Messages(Id) ON DELETE CASCADE,
-    SubTaskId INT NOT NULL REFERENCES SubTasks(Id) ON DELETE CASCADE
+    Content TEXT NOT NULL,
+    SubTaskId INT NOT NULL REFERENCES SubTasks(Id) ON DELETE CASCADE,
+    AuthorId INT REFERENCES Users(Id),
+    CreatedDate TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS UserProjects (
@@ -113,17 +112,16 @@ VALUES (1, 1, CURRENT_TIMESTAMP)
 
 BEGIN;
 
-DELETE FROM TimeLineReplies;
-DELETE FROM ProgressionMessages;
-DELETE FROM TimeLineMessages;
-DELETE FROM Messages WHERE Id > 1;
-DELETE FROM SubTasks;
-DELETE FROM Tasks;
+DELETE FROM TimeLineReplies WHERE id > 0;
+DELETE FROM ProgressionMessages WHERE id > 0;
+DELETE FROM TimeLineMessages  WHERE id > 0;
+DELETE FROM SubTasks WHERE id > 0;
+DELETE FROM Tasks WHERE id > 0;
 DELETE FROM UserProjects WHERE ProjectId > 1 OR UserId > 1;
 DELETE FROM Projects WHERE Id > 1;
 DELETE FROM Users WHERE Id > 1;
 
--- Insert sample users
+-- Insert sample data
 INSERT INTO Users (Username, Email, PasswordHash, Role, CreatedDate)
 VALUES
     ('johndoe', 'john@example.com', '$2a$11$iu7d5i8NjkpQcRkshAM83OPMmAuGzM77P.OOuzkxXaxTsBnYRKKg.', 'User', CURRENT_TIMESTAMP),
@@ -198,44 +196,28 @@ VALUES
     ('Create landing page content', CURRENT_DATE - INTERVAL '50 days', CURRENT_DATE - INTERVAL '40 days', 'Completed', 11, 2, CURRENT_TIMESTAMP)
     ON CONFLICT DO NOTHING;
 
-INSERT INTO Messages (Content, CreatedDate, AuthorId)
-VALUES
-    ('Welcome to the Website Redesign project! Let''s make this our best site yet.', CURRENT_TIMESTAMP - INTERVAL '30 days', 1),
-    ('I''ve completed all the design mockups. Please review and provide feedback.', CURRENT_TIMESTAMP - INTERVAL '15 days', 2),
-    ('The designs look great! I''ll start implementing the frontend right away.', CURRENT_TIMESTAMP - INTERVAL '14 days', 3),
-    ('Backend API changes are taking longer than expected. I might need help.', CURRENT_TIMESTAMP - INTERVAL '7 days', 3),
-    ('I can help with the API work. Let''s sync up tomorrow.', CURRENT_TIMESTAMP - INTERVAL '7 days', 1),
-    ('Mobile app development project is now underway. Please check tasks assigned to you.', CURRENT_TIMESTAMP - INTERVAL '15 days', 1),
-    ('The iOS implementation is going well, but we might need to extend the timeline.', CURRENT_TIMESTAMP - INTERVAL '3 days', 3),
-    ('Update on the payment integration: We''re at 60% completion and on track.', CURRENT_TIMESTAMP - INTERVAL '2 days', 3),
-    ('Great work on the marketing campaign! The metrics look excellent.', CURRENT_TIMESTAMP - INTERVAL '15 days', 1),
-    ('Homepage mockup is complete and ready for review', CURRENT_TIMESTAMP - INTERVAL '28 days', 2),
-    ('Integrated payment provider SDK successfully', CURRENT_TIMESTAMP - INTERVAL '2 days', 3)
-    ON CONFLICT DO NOTHING;
 
-INSERT INTO TimeLineMessages (MessageId, Type, IsPinned, ProjectId)
+INSERT INTO TimeLineMessages (Content, Type, IsPinned, ProjectId, AuthorId, CreatedDate)
 VALUES
-    (1, 'Update', TRUE, 1),  -- Announcement for Website Redesign
-    (2, 'Update', FALSE, 1), -- Status update for Website Redesign
-    (3, 'Update', FALSE, 1), -- Reply for Website Redesign
-    (4, 'Update', FALSE, 1), -- Question for Website Redesign
-    (5, 'Update', FALSE, 1), -- Answer for Website Redesign
-    (6, 'Update', TRUE, 2),  -- Announcement for Mobile App
-    (7, 'Update', FALSE, 2), -- Status update for Mobile App
-    (8, 'Update', FALSE, 4), -- Status update for API Integration
-    (9, 'Update', TRUE, 5)   -- Announcement for Marketing Campaign
-    ON CONFLICT DO NOTHING;
+    ('Welcome to the Website Redesign project! Let''s make this our best site yet.', 'Update', TRUE, 1, 1, CURRENT_TIMESTAMP - INTERVAL '30 days'),
+    ('I''ve completed all the design mockups. Please review and provide feedback.', 'Update', FALSE, 1, 2, CURRENT_TIMESTAMP - INTERVAL '15 days'),
+    ('Backend API changes are taking longer than expected. I might need help.', 'Update', FALSE, 1, 3, CURRENT_TIMESTAMP - INTERVAL '7 days'),
+    ('Mobile app development project is now underway. Please check tasks assigned to you.', 'Update', TRUE, 2, 1, CURRENT_TIMESTAMP - INTERVAL '15 days'),
+    ('The iOS implementation is going well, but we might need to extend the timeline.', 'Update', FALSE, 2, 3, CURRENT_TIMESTAMP - INTERVAL '3 days'),
+    ('Update on the payment integration: We''re at 60% completion and on track.', 'Update', FALSE, 4, 3, CURRENT_TIMESTAMP - INTERVAL '2 days'),
+    ('Great work on the marketing campaign! The metrics look excellent.', 'Update', TRUE, 5, 1, CURRENT_TIMESTAMP - INTERVAL '15 days')
+ON CONFLICT DO NOTHING;
 
-INSERT INTO TimeLineReplies (MessageId, TimeLineMessageId)
+INSERT INTO TimeLineReplies (Content, TimeLineMessageId, AuthorId, CreatedDate)
 VALUES
-    (3, 2), -- Reply to status update
-    (5, 4)  -- Reply to question
-    ON CONFLICT DO NOTHING;
+    ('The designs look great! I''ll start implementing the frontend right away.', 2, 3, CURRENT_TIMESTAMP - INTERVAL '14 days'),
+    ('I can help with the API work. Let''s sync up tomorrow.', 3, 1, CURRENT_TIMESTAMP - INTERVAL '7 days')
+ON CONFLICT DO NOTHING;
 
-INSERT INTO ProgressionMessages (MessageId, SubTaskId)
+INSERT INTO ProgressionMessages (Content, SubTaskId, AuthorId, CreatedDate)
 VALUES
-    (10, 1),  -- Message about homepage mockup
-    (11, 23)  -- Message about payment integration
-    ON CONFLICT DO NOTHING;
+    ('Homepage mockup is complete and ready for review', 1, 2, CURRENT_TIMESTAMP - INTERVAL '28 days'),
+    ('Integrated payment provider SDK successfully', 23, 3, CURRENT_TIMESTAMP - INTERVAL '2 days')
+ON CONFLICT DO NOTHING;
 
 COMMIT;

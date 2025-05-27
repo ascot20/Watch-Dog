@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Dapper;
 using WatchDog.Data.Factories;
@@ -19,9 +20,9 @@ public class ProjectRepository : Repository<Project>, IProjectRepository
         await base.CreateAsync(project);
         using var connection = _dbConnectionFactory.CreateConnection();
 
-        var query = $@"INSERT INTO {this._tableName} (Title, Description, CreatedDate, StartDate, EndDate, Status)
-                       VALUES (@Title, @Description, @CreatedDate, @StartDate, @EndDate, @Status);
-                       RETURNING Id";
+        var query = $@"INSERT INTO Projects (Title, Description, CreatedDate, StartDate, EndDate, Status)
+                       VALUES (@Title, @Description, @CreatedDate, @StartDate, @EndDate, @Status)
+                       RETURNING Id;";
 
         return await connection.QuerySingleAsync<int>(query, new
         {
@@ -30,28 +31,39 @@ public class ProjectRepository : Repository<Project>, IProjectRepository
             project.CreatedDate,
             project.StartDate,
             project.EndDate,
-            Status = (int)project.Status,
+            project.Status,
         });
     }
 
-    public async Task<IEnumerable<Project>> GetByUserIdAsync(int userId)
+    public override async Task<bool> UpdateAsync(Project project)
     {
-        using var connection = this._dbConnectionFactory.CreateConnection();
-        return await connection.QueryAsync<Project>($@"
-            SELECT * FROM Projects
-            JOIN UserProjects ON Users.Id = UserProjects.ProjectId
-            WHERE UserProjects.UserId = @UserId",
-            new { UserId = userId }
-        );
-    }
+        try
+        {
+            using var connection = _dbConnectionFactory.CreateConnection();
 
-    public Task<Project?> GetWithMembersAsync(int projectId)
-    {
-        throw new System.NotImplementedException();
-    }
+            var query = @"
+                UPDATE Projects
+                SET Status = @Status,
+                    EndDate = CASE 
+                                WHEN @Status = 'Completed' THEN CURRENT_TIMESTAMP 
+                                ELSE EndDate 
+                              END
+                WHERE Id = @ProjectId";
 
-    public Task<Project?> GetWithTasksAsync(int projectId)
-    {
-        throw new System.NotImplementedException();
+            int rowsAffected = await connection.ExecuteAsync(
+                query,
+                new
+                {
+                    ProjectId = project.Id,
+                    project.Status
+                }
+            );
+
+            return rowsAffected > 0;
+        }
+        catch (Exception e)
+        {
+            throw new Exception($"Database error in {nameof(UpdateAsync)}: {e.Message}");
+        } 
     }
 }
