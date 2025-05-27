@@ -9,10 +9,9 @@ public class TimeLineMessage:Message
     public bool IsPinned { get; set; }
     
     //Foreign keys
-    public int ProjectId{get;set;}
+    public required int ProjectId{get;set;}
     
     //Navigation properties
-    public Project? Project {get;set;}
     public ICollection<TimeLineReply> Replies {get;set;} = new List<TimeLineReply>();
 }
 

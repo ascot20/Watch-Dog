@@ -11,12 +11,10 @@ public class SubTask:AuditableEntity
     public SubTaskStatus Status { get; set; }
     
     //Foreign keys
-    public int TaskId { get; set; }
-    public int CreatedById { get; set; }
+    public required int TaskId { get; set; }
+    public required int CreatedById { get; set; }
     
     //Navigation properties
-    public Task? Task { get; set; }
-    public User? CreatedBy { get; set; }
     public ICollection<ProgressionMessage> ProgressionMessages {get;set;} = new List<ProgressionMessage>();
 }
 

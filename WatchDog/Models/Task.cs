@@ -12,11 +12,9 @@ public class Task:AuditableEntity
     public int PercentageComplete { get; set; }
     
     //Foreign keys
-    public int ProjectId { get; set; }
-    public int AssignedUserId { get; set; }
+    public required int ProjectId { get; set; }
+    public required int AssignedUserId { get; set; }
     
     //Navigation properties
-    public Project? Project { get; set; }
-    public User? AssignedUser { get; set; }
     public ICollection<SubTask> SubTasks {get;set;} = new List<SubTask>();
 }
