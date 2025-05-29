@@ -1,46 +1,44 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using WatchDog.Data.Repositories;
 using WatchDog.Models;
 
 namespace WatchDog.Services;
 
-public class ProgressionMessageService: IProgressionMessageService
+public class ProgressionMessageService : IProgressionMessageService
 {
     private readonly IProgressionMessageRepository _progressionMessageRepository;
-    private readonly ISubTaskRepository _subTaskRepository;
+    private readonly ISubtaskService _subtaskService;
 
     public ProgressionMessageService(
         IProgressionMessageRepository progressionMessageRepository,
-        ISubTaskRepository subTaskRepository)
+        ISubtaskService subtaskService)
     {
         _progressionMessageRepository = progressionMessageRepository;
-        _subTaskRepository = subTaskRepository;
+        _subtaskService = subtaskService;
     }
-    
-    public async Task<int> CreateMessageAsync(ProgressionMessage progressionMessage)
-    {
-        if (progressionMessage == null)
-        {
-            throw new ArgumentNullException(nameof(progressionMessage), "Progression message cannot be null");
-        }
 
-        if (string.IsNullOrWhiteSpace(progressionMessage.Content))
-        {
-            throw new ArgumentException("Message content cannot be empty", nameof(progressionMessage));
-        }
+    public async Task<int> CreateMessageAsync(string message, int subTaskId, int creatorId)
+    {
+        this.ValidateMessage(message);
 
         try
         {
-            var subtask = await _subTaskRepository.GetByIdAsync(progressionMessage.SubTaskId);
-            if (subtask == null)
+            bool subtaskExists = await _subtaskService.SubtaskExistsAsync(subTaskId);
+            if (!subtaskExists)
             {
-                throw new ArgumentException($"Subtask with ID {progressionMessage.SubTaskId} does not exist");
+                throw new ArgumentException($"Subtask with ID {subTaskId} does not exist");
             }
 
-            progressionMessage.CreatedDate = DateTime.UtcNow;
+            var newMessage = new ProgressionMessage
+            {
+                Content = message,
+                SubTaskId = subTaskId,
+                AuthorId = creatorId,
+            };
 
-            return await _progressionMessageRepository.CreateAsync(progressionMessage);
+            return await _progressionMessageRepository.CreateAsync(newMessage);
         }
         catch (Exception e)
         {
@@ -48,5 +46,29 @@ public class ProgressionMessageService: IProgressionMessageService
         }
     }
 
+    public Task<IEnumerable<ProgressionMessage>> GetBySubTaskIdAsync(int subTaskId)
+    {
+        try
+        {
+            var messages = _progressionMessageRepository.GetBySubTaskIdAsync(subTaskId);
+            return messages;
+        }
+        catch (Exception e)
+        {
+          throw new Exception($"Error retrieving progression messages for subtask ID {subTaskId}: {e.Message}", e); 
+        }
+    }
 
+    private void ValidateMessage(string message)
+    {
+        if (message == null)
+        {
+            throw new ArgumentNullException(nameof(message), "Progression message cannot be null");
+        }
+
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            throw new ArgumentException("Message content cannot be empty");
+        }
+    }
 }

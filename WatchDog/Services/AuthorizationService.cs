@@ -1,6 +1,5 @@
 using System;
 using System.Threading.Tasks;
-using WatchDog.Data.Repositories;
 using WatchDog.Models;
 
 namespace WatchDog.Services;
@@ -8,11 +7,11 @@ namespace WatchDog.Services;
 public class AuthorizationService : IAuthorizationService
 {
     private User? _currentUser;
-    private readonly ITaskRepository _taskRepository;
+    private readonly ITaskService _taskService;
 
-    public AuthorizationService(ITaskRepository taskRepository)
+    public AuthorizationService(ITaskService taskService)
     {
-        _taskRepository = taskRepository;
+        _taskService = taskService;
     }
 
     public bool IsAdmin()
@@ -20,6 +19,11 @@ public class AuthorizationService : IAuthorizationService
         return _currentUser?.Role == UserRole.SuperAdmin;
     }
 
+    public string GetCurrentUserName()
+    {
+        return _currentUser?.Username ?? "Anonymous";
+    }
+    
     public async Task<bool> IsUserAuthorizedForTask(int taskId)
     {
         if (IsAdmin())
@@ -34,7 +38,7 @@ public class AuthorizationService : IAuthorizationService
 
         try
         {
-            var task = await _taskRepository.GetByIdAsync(taskId);
+            var task = await _taskService.GetTaskAsync(taskId);
             if (task == null)
             {
                 return false;
@@ -47,7 +51,7 @@ public class AuthorizationService : IAuthorizationService
 
             return false;
         }
-        catch (Exception e)
+        catch (Exception)
         {
             return false;
         }

@@ -10,30 +10,50 @@ namespace WatchDog.Services;
 public class UserService : IUserService
 {
     private readonly IUserRepository _userRepository;
-    private readonly ITaskRepository _taskRepository;
+    private readonly ITaskService _taskService;
     private readonly IUserProjectRepository _userProjectRepository;
+    private readonly IAuthorizationService _authorizationService;
 
-    public UserService(IUserRepository userRepository, ITaskRepository taskRepository,
-        IUserProjectRepository userProjectRepository)
+    public UserService(IUserRepository userRepository, ITaskService taskService,
+        IUserProjectRepository userProjectRepository, IAuthorizationService authorizationService)
     {
         this._userRepository = userRepository;
-        this._taskRepository = taskRepository;
+        this._taskService = taskService;
         this._userProjectRepository = userProjectRepository;
+        this._authorizationService = authorizationService;
     }
 
-    public async Task<int> RegisterAsync(User user, string password = "default")
+    public async Task<int> RegisterAsync(
+        string email,
+        string username,
+        string password = "default",
+        UserRole role = UserRole.User)
     {
+        this.ValidateInputs(password,email);
+        if (!_authorizationService.IsAdmin())
+        {
+            throw new UnauthorizedAccessException("Only admins can register new users");
+        }
+
         try
         {
-            var existingUser = _userRepository.GetByEmailAsync(user.Email);
+            var existingUser = await _userRepository.GetByEmailAsync(email);
             if (existingUser != null)
             {
                 throw new Exception("User already exists");
             }
 
-            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(password);
+            string passwordHash = BCrypt.Net.BCrypt.HashPassword(password);
 
-            return await _userRepository.CreateAsync(user);
+            var newUser = new User
+            {
+                Username = username,
+                Email = email,
+                PasswordHash = passwordHash,
+                Role = UserRole.User
+            };
+            
+            return await _userRepository.CreateAsync(newUser);
         }
         catch (Exception e)
         {
@@ -43,15 +63,7 @@ public class UserService : IUserService
 
     public async Task<User?> AuthenticateAsync(string email, string password)
     {
-        if (string.IsNullOrWhiteSpace(email))
-        {
-            throw new ArgumentException("Email cannot be null or empty", nameof(email));
-        }
-
-        if (string.IsNullOrWhiteSpace(password))
-        {
-            throw new ArgumentException("Password cannot be null or empty", nameof(password));
-        }
+       this.ValidateInputs(password,email); 
 
         try
         {
@@ -80,7 +92,7 @@ public class UserService : IUserService
 
             if (user != null)
             {
-                user.AssignedTasks = (await _taskRepository.GetByAssignedUserIdAsync(id)).ToList();
+                user.AssignedTasks = (await _taskService.GetByAssignedUserIdAsync(id)).ToList();
                 user.UserProjects = (await _userProjectRepository.GetProjectsByUserIdAsync(id)).ToList();
             }
 
@@ -91,6 +103,25 @@ public class UserService : IUserService
             Console.WriteLine(e);
             throw;
         }
+    }
+
+    public async Task<string> GetUserNameAsync(int id)
+    {
+        try
+        {
+            var user = await _userRepository.GetByIdAsync(id);
+            if (user == null)
+            {
+                throw new ArgumentException($"User with ID {id} does not exist");
+            }
+        
+            return user.Username;
+        }
+        catch (Exception e)
+        {
+            throw new Exception($"Error retrieving username for user ID {id}: {e.Message}", e);
+        }
+
     }
 
     public async Task<IEnumerable<User>> GetAllAsync()
@@ -133,6 +164,11 @@ public class UserService : IUserService
                 return false;
             }
 
+            if (!BCrypt.Net.BCrypt.Verify(oldPassword, user.PasswordHash))
+            {
+                return false;
+            }
+
             string newPasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
             user.PasswordHash = newPasswordHash;
 
@@ -141,6 +177,32 @@ public class UserService : IUserService
         catch (Exception e)
         {
             throw new Exception($"Error changing password: {e.Message}");
+        }
+    }
+
+    public async Task<bool> UserExistsAsync(int userId)
+    {
+        try
+        {
+            var user = await _userRepository.GetByIdAsync(userId);
+            return user != null;
+        }
+        catch (Exception e)
+        {
+            throw new Exception($"Error checking if user exists: {e.Message}");
+        }
+    }
+
+    private void ValidateInputs(string password, string email)
+    {
+        if (string.IsNullOrWhiteSpace(password))
+        {
+            throw new ArgumentException("Password cannot be empty", nameof(password));
+        }
+
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            throw new ArgumentException("Email cannot be empty", nameof(email));
         }
     }
 }

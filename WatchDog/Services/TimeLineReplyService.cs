@@ -1,62 +1,69 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using WatchDog.Data.Repositories;
 using WatchDog.Models;
 
 namespace WatchDog.Services;
 
-public class TimeLineReplyService: ITimeLineReplyService
+public class TimeLineReplyService : ITimeLineReplyService
 {
     private readonly ITimeLineReplyRepository _timeLineReplyRepository;
-    private readonly ITimeLineMessageRepository _timeLineMessageRepository;
-    private readonly IUserRepository _userRepository;
-    private readonly IAuthorizationService _authorizationService;
+    private readonly ITimeLineMessageService _timeLineMessageService;
 
     public TimeLineReplyService(
         ITimeLineReplyRepository timeLineReplyRepository,
-        ITimeLineMessageRepository timeLineMessageRepository,
-        IUserRepository userRepository,
-        IAuthorizationService authorizationService)
+        ITimeLineMessageService timeLineMessageService
+        )
     {
         _timeLineReplyRepository = timeLineReplyRepository;
-        _timeLineMessageRepository = timeLineMessageRepository;
-        _userRepository = userRepository;
-        _authorizationService = authorizationService;
+        _timeLineMessageService = timeLineMessageService;
     }
 
-    public async Task<int> CreateReplyAsync(TimeLineReply reply)
+    public async Task<int> CreateReplyAsync(string reply, int creatorId, int messageId)
     {
-        if (reply == null)
-        {
-            throw new ArgumentNullException(nameof(reply), "Timeline reply cannot be null");
-        }
-
-        if (string.IsNullOrWhiteSpace(reply.Content))
-        {
-            throw new ArgumentException("Reply content cannot be empty", nameof(reply));
-        }
+        this.ValidateReply(reply);
 
         try
         {
-            var parentMessage = await _timeLineMessageRepository.GetByIdAsync(reply.TimeLineMessageId);
-            if (parentMessage == null)
+            bool messageExists = await _timeLineMessageService.MessageExistsAsync(messageId);
+            if (!messageExists)
             {
-                throw new ArgumentException($"Timeline message with ID {reply.TimeLineMessageId} does not exist");
+                throw new ArgumentException("Message does not exist");
             }
 
-            var user = await _userRepository.GetByIdAsync(_authorizationService.GetCurrentUserId());
-            if (user == null)
+            var newReply = new TimeLineReply
             {
-                throw new ArgumentException("Invalid user");
-            }
-
-            reply.CreatedDate = DateTime.UtcNow;
-
-            return await _timeLineReplyRepository.CreateAsync(reply);
+                Content = reply,
+                AuthorId = creatorId,
+                TimeLineMessageId = messageId
+            };
+            return await _timeLineReplyRepository.CreateAsync(newReply);
         }
         catch (Exception e)
         {
             throw new Exception($"Error creating timeline reply: {e.Message}", e);
+        }
+    }
+
+    public async Task<IEnumerable<TimeLineReply>> GetByMessageIdAsync(int messageId)
+    {
+        try
+        {
+            var replies = await _timeLineReplyRepository.GetByMessageIdAsync(messageId);
+            return replies;
+        }
+        catch (Exception e)
+        {
+            throw new Exception($"Error retrieving timeline replies: {e.Message}", e);
+        }
+    }
+
+    private void ValidateReply(string message)
+    {
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            throw new ArgumentException("Reply content cannot be empty");
         }
     }
 }

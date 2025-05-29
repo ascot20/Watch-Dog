@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using WatchDog.Data.Repositories;
@@ -9,76 +10,49 @@ namespace WatchDog.Services;
 public class SubTaskService : ISubtaskService
 {
     private readonly ISubTaskRepository _subtaskRepository;
-    private readonly ITaskRepository _taskRepository;
-    private readonly IUserRepository _userRepository;
-    private readonly ITimeLineMessageRepository _timeLineMessageRepository;
-    private readonly IProgressionMessageRepository _progressionMessageRepository;
+    private readonly ITaskService _taskService;
+    private readonly IProgressionMessageService _progressionMessageService;
     private readonly IAuthorizationService _authorizationService;
 
     public SubTaskService(
         ISubTaskRepository subtaskRepository,
-        ITaskRepository taskRepository,
-        IUserRepository userRepository,
-        ITimeLineMessageRepository timeLineMessageRepository,
-        IProgressionMessageRepository progressionMessageRepository,
+        ITaskService taskService,
+        IProgressionMessageService progressionMessageService,
         IAuthorizationService authorizationService)
     {
         _subtaskRepository = subtaskRepository;
-        _taskRepository = taskRepository;
-        _userRepository = userRepository;
-        _timeLineMessageRepository = timeLineMessageRepository;
-        _progressionMessageRepository = progressionMessageRepository;
+        _taskService = taskService;
+        _progressionMessageService = progressionMessageService;
         _authorizationService = authorizationService;
     }
 
-    public async Task<int> CreateSubtaskAsync(SubTask subTask)
+    public async Task<int> CreateSubtaskAsync(string description, int taskId, int creatorId)
     {
-        if (subTask == null)
-        {
-            throw new ArgumentNullException(nameof(subTask), "Subtask cannot be null");
-        }
-
-        if (string.IsNullOrWhiteSpace(subTask.Description))
-        {
-            throw new ArgumentException("Subtask description cannot be empty", nameof(subTask));
-        }
+        this.ValidateSubtask(description);
 
         try
         {
-            var task = await _taskRepository.GetByIdAsync(subTask.TaskId);
-            if (task == null)
+            bool taskExists = await _taskService.TaskExistsAsync(taskId);
+            if (!taskExists)
             {
-                throw new ArgumentException($"Task with ID {subTask.TaskId} does not exist");
+                throw new ArgumentException($"Task with ID {taskId} does not exist");
             }
 
-            var user = await _userRepository.GetByIdAsync(subTask.CreatedById);
-            if (user == null)
-            {
-                throw new ArgumentException($"User with ID {subTask.CreatedById} does not exist");
-            }
-
-            bool isAuthorized = await _authorizationService.IsUserAuthorizedForTask(subTask.TaskId);
+            bool isAuthorized = await _authorizationService.IsUserAuthorizedForTask(taskId);
             if (!isAuthorized)
             {
                 throw new UnauthorizedAccessException(
-                    $"You are not authorized to create subtasks for task with ID {subTask.TaskId}");
+                    $"You are not authorized to create subtasks for task with ID {taskId}");
             }
 
-            subTask.CreatedDate = DateTime.UtcNow;
-
-            int subtaskId = await _subtaskRepository.CreateAsync(subTask);
-
-            var timelineMessage = new TimeLineMessage
+            var newSubTask = new SubTask
             {
-                Content = $"Subtask '{subTask.Description}' has been created for task '{task.TaskDescription}'",
-                Type = MessageType.Update,
-                IsPinned = false,
-                ProjectId = task.ProjectId,
-                AuthorId = _authorizationService.GetCurrentUserId(),
-                CreatedDate = DateTime.UtcNow
+                Description = description,
+                CreatedById = creatorId,
+                TaskId = taskId
             };
 
-            await _timeLineMessageRepository.CreateAsync(timelineMessage);
+            int subtaskId = await _subtaskRepository.CreateAsync(newSubTask);
 
             return subtaskId;
         }
@@ -96,7 +70,7 @@ public class SubTaskService : ISubtaskService
 
             if (subtask != null)
             {
-                var progressionMessages = await _progressionMessageRepository.GetBySubTaskIdAsync(subTaskId);
+                var progressionMessages = await _progressionMessageService.GetBySubTaskIdAsync(subTaskId);
                 subtask.ProgressionMessages = progressionMessages.ToList();
             }
 
@@ -108,58 +82,99 @@ public class SubTaskService : ISubtaskService
         }
     }
 
-    public async Task<bool> UpdateSubtaskAsync(SubTask subTask)
+    public async Task<IEnumerable<SubTask>> GetSubtasksByTaskIdAsync(int taskId)
     {
-        if (subTask == null)
+        try
         {
-            throw new ArgumentNullException(nameof(subTask), "Subtask cannot be null");
+            bool taskExists = await _taskService.TaskExistsAsync(taskId);
+            if (!taskExists)
+            {
+                throw new ArgumentException($"Task with ID {taskId} does not exist");
+            }
+            
+            var subtasks = await _subtaskRepository.GetByTaskIdAsync(taskId);
+            return subtasks;
         }
+        catch (Exception e)
+        {
+           throw new Exception($"Error retrieving subtasks by task ID: {e.Message}", e); 
+        }
+    }
 
-        if (string.IsNullOrWhiteSpace(subTask.Description))
-        {
-            throw new ArgumentException("Subtask description cannot be empty", nameof(subTask));
-        }
+    public async Task<bool> UpdateSubtaskAsync(int subTaskId, string description, SubTaskStatus status)
+    {
+        this.ValidateSubtask(description);
 
         try
         {
-            var existingSubtask = await _subtaskRepository.GetByIdAsync(subTask.Id);
+            var existingSubtask = await _subtaskRepository.GetByIdAsync(subTaskId);
             if (existingSubtask == null)
             {
                 return false;
             }
 
-            var task = await _taskRepository.GetByIdAsync(existingSubtask.TaskId);
-            if (task == null)
+            bool taskExists = await _taskService.TaskExistsAsync(existingSubtask.TaskId);
+            if (!taskExists)
             {
-                throw new Exception($"Parent task for subtask {subTask.Id} not found");
+                throw new ArgumentException($"Task with ID {existingSubtask.TaskId} does not exist");
             }
 
             bool isAuthorized = await _authorizationService.IsUserAuthorizedForTask(existingSubtask.TaskId);
             if (!isAuthorized)
             {
-                throw new UnauthorizedAccessException($"You are not authorized to update subtask with ID {subTask.Id}");
+                throw new UnauthorizedAccessException($"You are not authorized to update subtask with ID {subTaskId}");
             }
 
-            return await _subtaskRepository.UpdateAsync(subTask);
+            if (!string.IsNullOrEmpty(description) && description != existingSubtask.Description)
+            {
+                existingSubtask.Description = description;
+            }
+
+            if (status != existingSubtask.Status)
+            {
+                existingSubtask.Status = status;
+            }
+
+            return await _subtaskRepository.UpdateAsync(existingSubtask);
         }
         catch (Exception e)
         {
             throw new Exception($"Error updating subtask: {e.Message}", e);
         }
     }
-    
+
     public async Task<bool> DeleteSubtaskAsync(int subTaskId)
+    {
+        try
         {
-            try
-            {
-                await _subtaskRepository.DeleteAsync(subTaskId);
+            await _subtaskRepository.DeleteAsync(subTaskId);
 
-                return true;
-            }
-            catch (Exception e)
-            {
-                throw new Exception($"Error deleting subtask: {e.Message}", e);
-            }
+            return true;
         }
+        catch (Exception e)
+        {
+            throw new Exception($"Error deleting subtask: {e.Message}", e);
+        }
+    }
 
+    public async Task<bool> SubtaskExistsAsync(int subTaskId)
+    {
+        try
+        {
+            var subtask = await _subtaskRepository.GetByIdAsync(subTaskId);
+            return subtask != null;
+        }
+        catch (Exception e)
+        {
+            throw new Exception($"Error checking if subtask exists: {e.Message}", e);
+        }
+    }
+
+    private void ValidateSubtask(string description)
+    {
+        if (string.IsNullOrWhiteSpace(description))
+        {
+            throw new ArgumentException("Subtask description cannot be empty");
+        }
+    }
 }

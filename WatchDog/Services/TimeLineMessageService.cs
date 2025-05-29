@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using WatchDog.Data.Repositories;
@@ -9,45 +10,49 @@ namespace WatchDog.Services;
 public class TimeLineMessageService : ITimeLineMessageService
 {
     private readonly ITimeLineMessageRepository _timeLineMessageRepository;
-    private readonly ITimeLineReplyRepository _timeLineReplyRepository;
-    private readonly IProjectRepository _projectRepository;
+    private readonly ITimeLineReplyService _timeLineReplyService;
+    private readonly IProjectService _projectService;
     private readonly IAuthorizationService _authorizationService;
 
     public TimeLineMessageService(
         ITimeLineMessageRepository timeLineMessageRepository,
-        ITimeLineReplyRepository timeLineReplyRepository,
-        IProjectRepository projectRepository,
+        ITimeLineReplyService timeLineReplyService,
+        IProjectService projectService,
         IAuthorizationService authorizationService)
     {
         _timeLineMessageRepository = timeLineMessageRepository;
-        _timeLineReplyRepository = timeLineReplyRepository;
-        _projectRepository = projectRepository;
+        _timeLineReplyService = timeLineReplyService;
+        _projectService = projectService;
         _authorizationService = authorizationService;
     }
 
-    public async Task<int> CreateMessageAsync(TimeLineMessage message)
+    public async Task<int> CreateMessageAsync(string message,
+        int creatorId,
+        int projectId,
+        MessageType type = MessageType.Question,
+        bool isPinned = false)
     {
-        if (message == null)
-        {
-            throw new ArgumentNullException(nameof(message), "Timeline message cannot be null");
-        }
-
-        if (string.IsNullOrWhiteSpace(message.Content))
-        {
-            throw new ArgumentException("Timeline message content cannot be empty", nameof(message));
-        }
+        this.ValidateMessage(message);
 
         try
         {
-            var project = await _projectRepository.GetByIdAsync(message.ProjectId);
-            if (project == null)
+            bool projectExists = await _projectService.ProjectExistsAsync(projectId);
+
+            if (!projectExists)
             {
-                throw new ArgumentException($"Project with ID {message.ProjectId} does not exist");
+                throw new ArgumentException($"Project with ID {projectId} does not exist");
             }
 
-            message.CreatedDate = DateTime.UtcNow;
+            var newMessage = new TimeLineMessage
+            {
+                Content = message,
+                Type = type,
+                IsPinned = isPinned,
+                ProjectId = projectId,
+                AuthorId = creatorId
+            };
 
-            return await _timeLineMessageRepository.CreateAsync(message);
+            return await _timeLineMessageRepository.CreateAsync(newMessage);
         }
         catch (Exception e)
         {
@@ -63,7 +68,7 @@ public class TimeLineMessageService : ITimeLineMessageService
 
             if (message != null)
             {
-                var replies = await _timeLineReplyRepository.GetByMessageIdAsync(messageId);
+                var replies = await _timeLineReplyService.GetByMessageIdAsync(messageId);
                 message.Replies = replies.ToList();
             }
 
@@ -75,27 +80,38 @@ public class TimeLineMessageService : ITimeLineMessageService
         }
     }
 
-    public async Task<bool> UpdateMessageAsync(TimeLineMessage message)
+    public async Task<IEnumerable<TimeLineMessage>> GetMessagesByProjectIdAsync(int projectId)
     {
-        if (message == null)
-        {
-            throw new ArgumentNullException(nameof(message), "Timeline message cannot be null");
-        }
-
-        if (string.IsNullOrWhiteSpace(message.Content))
-        {
-            throw new ArgumentException("Timeline message content cannot be empty", nameof(message));
-        }
-
         try
         {
-            var existingMessage = await _timeLineMessageRepository.GetByIdAsync(message.Id);
+            var messages = await _timeLineMessageRepository.GetByProjectIdAsync(projectId);
+            return messages;
+        }
+        catch (Exception e)
+        {
+            throw new Exception($"Error retrieving timeline messages for project ID {projectId}: {e.Message}", e);
+        }
+    }
+
+    public async Task<bool> UpdateMessageAsync(int messageId, MessageType type, bool isPinned)
+    {
+        try
+        {
+            var existingMessage = await _timeLineMessageRepository.GetByIdAsync(messageId);
             if (existingMessage == null)
             {
                 return false;
             }
 
-            return await _timeLineMessageRepository.UpdateAsync(message);
+            if (type != existingMessage.Type || isPinned != existingMessage.IsPinned)
+            {
+                existingMessage.Type = type;
+                existingMessage.IsPinned = isPinned;
+                await _timeLineMessageRepository.UpdateAsync(existingMessage);
+                return true;
+            }
+
+            return false;
         }
         catch (Exception e)
         {
@@ -127,6 +143,27 @@ public class TimeLineMessageService : ITimeLineMessageService
         catch (Exception e)
         {
             throw new Exception($"Error deleting timeline message: {e.Message}", e);
+        }
+    }
+
+    public async Task<bool> MessageExistsAsync(int messageId)
+    {
+        try
+        {
+            var message = await _timeLineMessageRepository.GetByIdAsync(messageId);
+            return message != null;
+        }
+        catch (Exception e)
+        {
+           throw new Exception($"Error checking if timeline message exists: {e.Message}", e); 
+        }
+    }
+
+    private void ValidateMessage(string message)
+    {
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            throw new ArgumentException("Timeline message content cannot be empty");
         }
     }
 }

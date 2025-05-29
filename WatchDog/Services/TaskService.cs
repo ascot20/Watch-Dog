@@ -1,79 +1,77 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using WatchDog.Data.Repositories;
 using WatchDog.Models;
+using Task = WatchDog.Models.Task;
 
 namespace WatchDog.Services;
 
 public class TaskService : ITaskService
 {
     private readonly ITaskRepository _taskRepository;
-    private readonly ISubTaskRepository _subTaskRepository;
-    private readonly IUserRepository _userRepository;
-    private readonly IProjectRepository _projectRepository;
-    private readonly ITimeLineMessageRepository _timeLineMessageRepository;
+    private readonly ISubtaskService _subtaskService;
+    private readonly IUserService _userService;
+    private readonly IProjectService _projectService;
+    private readonly ITimeLineMessageService _timeLineMessageService;
     private readonly IAuthorizationService _authorizationService;
 
     public TaskService(
         ITaskRepository taskRepository,
-        ISubTaskRepository subTaskRepository,
-        IUserRepository userRepository,
-        IProjectRepository projectRepository,
-        ITimeLineMessageRepository timeLineMessageRepository,
+        ISubtaskService subtaskService,
+        IUserService userService,
+        IProjectService projectService,
+        ITimeLineMessageService timeLineMessageService,
         IAuthorizationService authorizationService)
     {
         _taskRepository = taskRepository;
-        _subTaskRepository = subTaskRepository;
-        _userRepository = userRepository;
-        _projectRepository = projectRepository;
-        _timeLineMessageRepository = timeLineMessageRepository;
+        _subtaskService = subtaskService;
+        _userService = userService;
+        _projectService = projectService;
+        _timeLineMessageService = timeLineMessageService;
         _authorizationService = authorizationService;
     }
 
-    public async Task<int> CreateTaskAsync(Models.Task task)
+    public async Task<int> CreateTaskAsync(string description, int projectId, int assignedUserId)
     {
-        if (task == null)
-        {
-            throw new ArgumentNullException(nameof(task), "Task cannot be null");
-        }
-
-        if (string.IsNullOrWhiteSpace(task.TaskDescription))
-        {
-            throw new ArgumentException("Task description cannot be empty", nameof(task));
-        }
+        this.ValidateInputs(description);
 
         try
         {
-            var project = await _projectRepository.GetByIdAsync(task.ProjectId);
-            if (project == null)
+            if (!_authorizationService.IsAdmin())
             {
-                throw new ArgumentException($"Project with ID {task.ProjectId} does not exist");
+                throw new UnauthorizedAccessException("Only administrators can create tasks");
             }
 
-            var user = await _userRepository.GetByIdAsync(task.AssignedUserId);
+            bool projectExists = await _projectService.ProjectExistsAsync(projectId);
+            if (!projectExists)
+            {
+                throw new ArgumentException($"Project with ID {projectId} does not exist");
+            }
+
+            var user = await _userService.GetUserAsync(assignedUserId);
             if (user == null)
             {
-                throw new ArgumentException($"User with ID {task.AssignedUserId} does not exist");
+                throw new ArgumentException($"User with ID {assignedUserId} does not exist");
             }
 
-            task.StartDate = task.StartDate ?? DateTime.UtcNow;
-            task.PercentageComplete = 0;
-            task.CreatedDate = DateTime.UtcNow;
-
-            int taskId = await _taskRepository.CreateAsync(task);
-
-            var timelineMessage = new TimeLineMessage
+            var newTask = new Task
             {
-                Content = $"Task '{task.TaskDescription}' has been created and assigned to {user.Username}",
-                Type = MessageType.Update,
-                IsPinned = false,
-                ProjectId = task.ProjectId,
-                AuthorId = _authorizationService.GetCurrentUserId(),
-                CreatedDate = DateTime.UtcNow
+                TaskDescription = description,
+                ProjectId = projectId,
+                AssignedUserId = assignedUserId
             };
 
-            await _timeLineMessageRepository.CreateAsync(timelineMessage);
+            int taskId = await _taskRepository.CreateAsync(newTask);
+
+            await _timeLineMessageService.CreateMessageAsync(
+                message: $"Task '{description}' has been created and assigned to {user.Username}",
+                type: MessageType.Update,
+                isPinned: false,
+                projectId: projectId,
+                creatorId: _authorizationService.GetCurrentUserId()
+            );
 
             return taskId;
         }
@@ -91,7 +89,7 @@ public class TaskService : ITaskService
 
             if (task != null)
             {
-                task.SubTasks = (await _subTaskRepository.GetByTaskIdAsync(taskId)).ToList();
+                task.SubTasks = (await _subtaskService.GetSubtasksByTaskIdAsync(taskId)).ToList();
             }
 
             return task;
@@ -102,53 +100,75 @@ public class TaskService : ITaskService
         }
     }
 
-    public async Task<bool> UpdateTaskAsync(Models.Task task)
+    public async Task<bool> UpdateTaskAsync(
+        int taskId,
+        string? description = null,
+        string? remarks = null,
+        DateTime? startDate = null,
+        int? percentageCompleted = null,
+        int? assignedUserId = null)
     {
-        if (task == null)
-        {
-            throw new ArgumentNullException(nameof(task), "Task cannot be null");
-        }
-
-        if (string.IsNullOrWhiteSpace(task.TaskDescription))
-        {
-            throw new ArgumentException("Task description cannot be empty", nameof(task));
-        }
-
         try
         {
-            var existingTask = await _taskRepository.GetByIdAsync(task.Id);
+            bool userAuthorized = await _authorizationService.IsUserAuthorizedForTask(taskId);
+            if (!userAuthorized)
+            {
+                throw new UnauthorizedAccessException("You are not authorized to update this task");
+            }
+            
+            var existingTask = await _taskRepository.GetByIdAsync(taskId);
             if (existingTask == null)
             {
                 return false;
             }
 
-            bool wasJustCompleted = task.PercentageComplete == 100 && existingTask.PercentageComplete < 100;
+            bool wasJustCompleted = percentageCompleted == 100 && existingTask.PercentageComplete < 100;
 
             // If task is now 100% complete and wasn't before, set the completed date
-            if (wasJustCompleted && !task.CompletedDate.HasValue)
+            if (wasJustCompleted)
             {
-                task.CompletedDate = DateTime.UtcNow;
+                existingTask.CompletedDate = DateTime.UtcNow;
             }
 
-            bool result = await _taskRepository.UpdateAsync(task);
+            if (!string.IsNullOrWhiteSpace(description))
+            {
+                existingTask.TaskDescription = description;
+            }
+
+            if (!string.IsNullOrWhiteSpace(remarks))
+            {
+                existingTask.Remarks = remarks;
+            }
+
+            if (startDate != existingTask.StartDate)
+            {
+                existingTask.StartDate = startDate;
+            }
+
+            if (percentageCompleted != existingTask.PercentageComplete && percentageCompleted != null)
+            {
+                existingTask.PercentageComplete = percentageCompleted.Value;
+            }
+
+            if (assignedUserId != null)
+            {
+                existingTask.AssignedUserId = assignedUserId.Value;
+            }
+
+            bool result = await _taskRepository.UpdateAsync(existingTask);
 
             if (result && wasJustCompleted)
             {
                 // Create a timeline message for task completion
-                var assignedUser = await _userRepository.GetByIdAsync(task.AssignedUserId);
-                string username = assignedUser?.Username ?? "A user";
+                var assignedUserName =_authorizationService.GetCurrentUserName(); 
 
-                var timelineMessage = new TimeLineMessage
-                {
-                    Content = $"Task '{task.TaskDescription}' has been completed by {username}",
-                    Type = MessageType.Milestone,
-                    IsPinned = false,
-                    ProjectId = task.ProjectId,
-                    AuthorId = _authorizationService.GetCurrentUserId(),
-                    CreatedDate = DateTime.UtcNow
-                };
-
-                await _timeLineMessageRepository.CreateAsync(timelineMessage);
+                await _timeLineMessageService.CreateMessageAsync(
+                    message:$"Task '{description}' has been completed by {assignedUserName}",
+                    type: MessageType.Milestone,
+                    isPinned: false,
+                    projectId:existingTask.ProjectId,
+                    creatorId: _authorizationService.GetCurrentUserId()
+                    );
             }
 
             return result;
@@ -156,6 +176,32 @@ public class TaskService : ITaskService
         catch (Exception e)
         {
             throw new Exception($"Error updating task: {e.Message}", e);
+        } 
+    }
+
+    public async Task<IEnumerable<Task>> GetByAssignedUserIdAsync(int userId)
+    {
+        try
+        {
+            var tasks = await _taskRepository.GetByAssignedUserIdAsync(userId);
+            return tasks.ToList();
+        }
+        catch (Exception e)
+        {
+            throw new Exception($"Error retrieving tasks by assigned user: {e.Message}", e);
+        }
+    }
+
+    public Task<IEnumerable<Task>> GetByProjectIdAsync(int projectId)
+    {
+        try
+        {
+            var tasks = _taskRepository.GetByProjectIdAsync(projectId);
+            return tasks;
+        }
+        catch (Exception e)
+        {
+            throw new Exception($"Error retrieving tasks by project ID {projectId}: {e.Message}", e);
         }
     }
 
@@ -171,23 +217,39 @@ public class TaskService : ITaskService
 
             await _taskRepository.DeleteAsync(taskId);
 
-            var timelineMessage = new TimeLineMessage
-            {
-                Content = $"Task '{task.TaskDescription}' has been deleted",
-                Type = MessageType.Update,
-                IsPinned = false,
-                ProjectId = task.ProjectId,
-                AuthorId = _authorizationService.GetCurrentUserId(),
-                CreatedDate = DateTime.UtcNow
-            };
-
-            await _timeLineMessageRepository.CreateAsync(timelineMessage);
+            await _timeLineMessageService.CreateMessageAsync(
+                message:$"Task '{task.TaskDescription}' has been deleted",
+                type: MessageType.Update,
+                isPinned: false,
+                projectId:task.ProjectId,
+                creatorId: _authorizationService.GetCurrentUserId());
 
             return true;
         }
         catch (Exception e)
         {
             throw new Exception($"Error deleting task: {e.Message}", e);
+        }
+    }
+
+    public async Task<bool> TaskExistsAsync(int taskId)
+    {
+        try
+        {
+            var task = await _taskRepository.GetByIdAsync(taskId);
+            return task != null;
+        }
+        catch (Exception e)
+        {
+            throw new Exception($"Error checking if task exists: {e.Message}", e);
+        }
+    }
+
+    private void ValidateInputs(string description)
+    {
+        if (string.IsNullOrWhiteSpace(description))
+        {
+            throw new ArgumentException("Task description cannot be empty");
         }
     }
 }
