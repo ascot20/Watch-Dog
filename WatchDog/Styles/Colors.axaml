@@ -1,0 +1,28 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- Dark theme colors -->
+    <Color x:Key="BackgroundDark">#0E1116</Color>
+    <Color x:Key="ContainerDark">#161B22</Color>
+    <Color x:Key="BorderColor">#323840</Color>
+    <Color x:Key="TextLight">#F1F6FB</Color>
+    <Color x:Key="ErrorRed">#CB2431</Color>
+    <Color x:Key="LinkBlue">#0366D6</Color>
+    
+    <!-- Button colors -->
+    <Color x:Key="PrimaryGreen">#438440</Color>
+    <Color x:Key="PrimaryGreenHover">#5AA456</Color>
+    <Color x:Key="PrimaryGreenPressed">#366B33</Color>
+    <Color x:Key="DisabledGrey">#CCCCCC</Color>
+    
+    <!-- Brushes -->
+    <SolidColorBrush x:Key="BackgroundDarkBrush" Color="{StaticResource BackgroundDark}"/>
+    <SolidColorBrush x:Key="ContainerDarkBrush" Color="{StaticResource ContainerDark}"/>
+    <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource BorderColor}"/>
+    <SolidColorBrush x:Key="TextLightBrush" Color="{StaticResource TextLight}"/>
+    <SolidColorBrush x:Key="ErrorBrush" Color="{StaticResource ErrorRed}"/>
+    <SolidColorBrush x:Key="LinkBrush" Color="{StaticResource LinkBlue}"/>
+    <SolidColorBrush x:Key="PrimaryButtonBrush" Color="{StaticResource PrimaryGreen}"/>
+    <SolidColorBrush x:Key="PrimaryButtonHoverBrush" Color="{StaticResource PrimaryGreenHover}"/>
+    <SolidColorBrush x:Key="PrimaryButtonPressedBrush" Color="{StaticResource PrimaryGreenPressed}"/>
+    <SolidColorBrush x:Key="DisabledBrush" Color="{StaticResource DisabledGrey}"/>
+</ResourceDictionary>

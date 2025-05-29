@@ -1,0 +1,43 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Primary Button Style -->
+    <Style Selector="Button.PrimaryButton">
+        <Setter Property="Background" Value="{DynamicResource PrimaryButtonBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextLightBrush}" />
+        <Setter Property="Height" Value="32" />
+        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+
+    <!-- Hover state -->
+    <Style Selector="Button.PrimaryButton:pointerover /template/ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource PrimaryButtonHoverBrush}" />
+    </Style>
+
+    <!-- Pressed state -->
+    <Style Selector="Button.PrimaryButton:pressed /template/ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource PrimaryButtonPressedBrush}" />
+        <Setter Property="RenderTransform" Value="scale(0.98)" />
+        <Setter Property="Opacity" Value="0.9" />
+    </Style>
+
+    <!-- Disabled state -->
+    <Style Selector="Button.PrimaryButton:disabled /template/ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource PrimaryButtonPressedBrush}" />
+        <Setter Property="Foreground" Value="#888888" />
+        <Setter Property="Opacity" Value="0.7" />
+    </Style>
+
+    <!-- Link Style -->
+    <Style Selector="TextBlock.Link">
+        <Setter Property="Foreground" Value="{DynamicResource LinkBrush}" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="FontSize" Value="12" />
+    </Style>
+
+    <Style Selector="TextBlock.Link:pointerover">
+        <Setter Property="TextDecorations" Value="Underline" />
+    </Style>
+</Styles>

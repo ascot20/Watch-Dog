@@ -1,0 +1,92 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:WatchDog.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="WatchDog.Views.LoginView"
+             x:DataType="vm:LoginViewModel">
+
+    <Design.DataContext>
+        <vm:LoginViewModel />
+    </Design.DataContext>
+
+    <Grid Background="{DynamicResource BackgroundDarkBrush}">
+        <StackPanel HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Width="300">
+
+            <!-- Logo -->
+            <Image Source="/Assets/logo.ico"
+                   Width="48"
+                   Height="48"
+                   Margin="0,0,0,20" />
+
+            <!-- Sign in header -->
+            <TextBlock Text="Sign in to WatchDog"
+                       Classes="Heading" />
+
+            <!-- Login form box -->
+            <Border Background="{DynamicResource ContainerDarkBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="6"
+                    Padding="20">
+                <StackPanel>
+                    <!-- Error message-->
+                    <TextBlock Text="{Binding ErrorMessage}"
+                               Classes="ErrorMessage"
+                               IsVisible="{Binding !!ErrorMessage}" />
+
+                    <!-- Username input -->
+                    <TextBlock Text="Email address"
+                               Classes="Label" />
+                    <TextBox Name="EmailTextBox"
+                             Height="32"
+                             CornerRadius="6"
+                             BorderBrush="{DynamicResource BorderBrush}"
+                             BorderThickness="1"
+                             Margin="0,0,0,16"
+                             Watermark="Enter email"
+                             Text="{Binding Email}" />
+
+                    <!-- Password input -->
+                    <TextBlock Text="Password"
+                               Classes="Label" />
+                    <TextBox Name="PasswordTextBox"
+                             PasswordChar="•"
+                             Height="32"
+                             CornerRadius="6"
+                             BorderBrush="{DynamicResource BorderBrush}"
+                             BorderThickness="1"
+                             Margin="0,0,0,16"
+                             Watermark="Enter password"
+                             Text="{Binding Password}" />
+
+                    <!-- Sign in button -->
+                    <Button Content="{Binding ButtonText}"
+                            Classes="PrimaryButton"
+                            HorizontalAlignment="Stretch"
+                            Command="{Binding LoginCommand}"
+                            IsEnabled="{Binding !IsLoading}" />
+                </StackPanel>
+            </Border>
+
+            <!-- Footer links -->
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Center"
+                        Margin="0,24,0,0">
+                <TextBlock Text="Terms"
+                           Classes="Link"
+                           Margin="0,0,8,0" />
+                <TextBlock Text="Privacy"
+                           Classes="Link"
+                           Margin="0,0,8,0" />
+                <TextBlock Text="Help"
+                           Classes="Link" />
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+
+
+</UserControl>
