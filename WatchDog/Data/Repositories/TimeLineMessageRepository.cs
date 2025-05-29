@@ -18,16 +18,6 @@ public class TimeLineMessageRepository: Repository<TimeLineMessage>, ITimeLineMe
 
     public override async Task<int> CreateAsync(TimeLineMessage timeLineMessage)
     {
-        if (timeLineMessage == null)
-        {
-            throw new ArgumentNullException(nameof(timeLineMessage), "TimeLineMessage cannot be null");
-        }
-
-        if (string.IsNullOrWhiteSpace(timeLineMessage.Content))
-        {
-            throw new ArgumentException("Content cannot be empty", nameof(timeLineMessage));
-        }
-
         try
         {
             await base.CreateAsync(timeLineMessage);
@@ -76,11 +66,6 @@ public class TimeLineMessageRepository: Repository<TimeLineMessage>, ITimeLineMe
 
     public async Task<IEnumerable<TimeLineMessage>> GetByDateRangeAsync(DateTime startDate, DateTime endDate)
     {
-        if (startDate > endDate)
-        {
-            throw new ArgumentException("Start date must be before or equal to end date", nameof(startDate));
-        }
-
         try
         {
             using var connection = this._dbConnectionFactory.CreateConnection();
@@ -149,11 +134,6 @@ public class TimeLineMessageRepository: Repository<TimeLineMessage>, ITimeLineMe
     
     public override async Task<bool> UpdateAsync(TimeLineMessage timeLineMessage)
     {
-        if (timeLineMessage == null)
-        {
-            throw new ArgumentNullException(nameof(timeLineMessage), "TimeLineMessage cannot be null");
-        }
-
         try
         {
             using var connection = this._dbConnectionFactory.CreateConnection();
@@ -178,5 +158,4 @@ public class TimeLineMessageRepository: Repository<TimeLineMessage>, ITimeLineMe
             throw new Exception($"Database error in {nameof(UpdateAsync)}: {e.Message}");
         }
     }
- 
 }

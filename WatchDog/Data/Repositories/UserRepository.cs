@@ -19,26 +19,6 @@ public class UserRepository: Repository<User>, IUserRepository
 
     public override async Task<int> CreateAsync(User user)
     {
-        if (user == null)
-        {
-            throw new ArgumentNullException(nameof(user), "User cannot be null");
-        }
-    
-        if (string.IsNullOrWhiteSpace(user.Username))
-        {
-            throw new ArgumentException("Username cannot be empty", nameof(user));
-        }
-    
-        if (string.IsNullOrWhiteSpace(user.Email))
-        {
-            throw new ArgumentException("Email cannot be empty", nameof(user));
-        }
-    
-        if (string.IsNullOrWhiteSpace(user.PasswordHash))
-        {
-            throw new ArgumentException("Password cannot be empty", nameof(user));
-        }
-
         try
         {
             await base.CreateAsync(user);
@@ -67,11 +47,6 @@ public class UserRepository: Repository<User>, IUserRepository
     
     public async Task<User?> GetByEmailAsync(string email)
     {
-        if (string.IsNullOrWhiteSpace(email))
-        {
-            throw new ArgumentException("Email cannot be null or empty", nameof(email));
-        }
-
         try
         {
             using var connection = this._dbConnectionFactory.CreateConnection();

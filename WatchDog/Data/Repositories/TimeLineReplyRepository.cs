@@ -17,17 +17,6 @@ public class TimeLineReplyRepository : Repository<TimeLineReply>, ITimeLineReply
 
     public override async Task<int> CreateAsync(TimeLineReply timeLineReply)
     {
-        if (timeLineReply == null)
-        {
-            throw new ArgumentNullException(nameof(timeLineReply), "TimeLineReply cannot be null");
-        }
-        
-        if (string.IsNullOrWhiteSpace(timeLineReply.Content))
-        {
-            throw new ArgumentException("Content cannot be empty", nameof(timeLineReply));
-        }
-
-
         try
         {
             await base.CreateAsync(timeLineReply);

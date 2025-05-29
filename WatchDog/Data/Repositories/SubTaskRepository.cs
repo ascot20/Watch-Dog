@@ -16,16 +16,6 @@ public class SubTaskRepository : Repository<SubTask>, ISubTaskRepository
 
     public override async Task<int> CreateAsync(SubTask progressionMessage)
     {
-        if (progressionMessage == null)
-        {
-            throw new ArgumentNullException(nameof(progressionMessage), "SubTask cannot be null");
-        }
-
-        if (string.IsNullOrWhiteSpace(progressionMessage.Description))
-        {
-            throw new ArgumentException("Description cannot be empty", nameof(progressionMessage));
-        }
-
         try
         {
             await base.CreateAsync(progressionMessage);
@@ -33,19 +23,15 @@ public class SubTaskRepository : Repository<SubTask>, ISubTaskRepository
             using var connection = this._dbConnectionFactory.CreateConnection();
 
             var query = @"
-                INSERT INTO SubTasks (Description, StartDate, CompletedDate, Status, TaskId, CreatedById, CreatedDate)
-                VALUES (@Description, @StartDate, @CompletedDate, @Status, @TaskId, @CreatedById, @CreatedDate)
+                INSERT INTO SubTasks (Description, StartDate, Status, TaskId, CreatedById)
+                VALUES (@Description, @TaskId, @CreatedById)
                 RETURNING Id;";
 
             return await connection.QuerySingleAsync<int>(query, new
             {
                 progressionMessage.Description,
-                progressionMessage.StartDate,
-                progressionMessage.CompletedDate,
-                progressionMessage.Status,
                 progressionMessage.TaskId,
                 progressionMessage.CreatedById,
-                progressionMessage.CreatedDate
             });
         }
         catch (Exception e)
@@ -88,16 +74,6 @@ public class SubTaskRepository : Repository<SubTask>, ISubTaskRepository
 
     public override async Task<bool> UpdateAsync(SubTask subTask)
     {
-        if (subTask == null)
-        {
-            throw new ArgumentNullException(nameof(subTask), "SubTask cannot be null");
-        }
-
-        if (string.IsNullOrWhiteSpace(subTask.Description))
-        {
-            throw new ArgumentException("Description cannot be empty", nameof(subTask));
-        }
-
         try
         {
             using var connection = this._dbConnectionFactory.CreateConnection();
@@ -105,16 +81,16 @@ public class SubTaskRepository : Repository<SubTask>, ISubTaskRepository
             var query = @"
                 UPDATE SubTasks
                 SET Description = @Description,
-                    StartDate = @StartDate,
-                    CompletedDate = @CompletedDate,
-                    Status = @Status
+                    Status = @Status,
+                    CompletedDate = CASE 
+                                        WHEN @Status='Completed' THEN CURRENT_TIMESTAMP
+                                        ELSE completeddate
+                                    END   
                 WHERE Id = @Id";
 
             int rowsAffected = await connection.ExecuteAsync(query, new
             {
                 subTask.Description,
-                subTask.StartDate,
-                subTask.CompletedDate,
                 subTask.Status,
                 subTask.Id
             });

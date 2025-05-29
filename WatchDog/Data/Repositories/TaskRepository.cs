@@ -50,38 +50,21 @@ public class TaskRepository : Repository<Models.Task>, ITaskRepository
 
     public override async Task<int> CreateAsync(Models.Task task)
     {
-        if (task == null)
-        {
-            throw new ArgumentNullException(nameof(task), "Task cannot be null");
-        }
-
-        if (string.IsNullOrWhiteSpace(task.TaskDescription))
-        {
-            throw new ArgumentException("Task description cannot be empty", nameof(task));
-        }
-
         try
         {
             await base.CreateAsync(task);
             using var connection = _dbConnectionFactory.CreateConnection();
 
             var query = @"
-                    INSERT INTO Tasks (TaskDescription, Remarks, StartDate, CompletedDate, 
-                                     PercentageComplete, ProjectId, AssignedUserId, CreatedDate)
-                    VALUES (@TaskDescription, @Remarks, @StartDate, @CompletedDate, 
-                           @PercentageComplete, @ProjectId, @AssignedUserId, @CreatedDate)
+                    INSERT INTO Tasks (TaskDescription, ProjectId, AssignedUserId)
+                    VALUES (@TaskDescription, @ProjectId, @AssignedUserId)
                     RETURNING Id;";
             
             return await connection.QuerySingleAsync<int>(query, new
             {
                 task.TaskDescription,
-                task.Remarks,
-                task.StartDate,
-                task.CompletedDate,
-                task.PercentageComplete,
                 task.ProjectId,
                 task.AssignedUserId,
-                task.CreatedDate
             });
         }
         catch (Exception e)
@@ -92,16 +75,6 @@ public class TaskRepository : Repository<Models.Task>, ITaskRepository
 
     public override async Task<bool> UpdateAsync(Models.Task task)
     {
-        if (task == null)
-        {
-            throw new ArgumentNullException(nameof(task), "Task cannot be null");
-        }
-
-        if (string.IsNullOrWhiteSpace(task.TaskDescription))
-        {
-            throw new ArgumentException("Task description cannot be empty", nameof(task));
-        }
-
         try
         {
             using var connection = _dbConnectionFactory.CreateConnection();
@@ -112,7 +85,8 @@ public class TaskRepository : Repository<Models.Task>, ITaskRepository
                         Remarks = @Remarks,
                         StartDate = @StartDate,
                         CompletedDate = @CompletedDate,
-                        PercentageComplete = @PercentageComplete
+                        PercentageComplete = @PercentageComplete,
+                        AssignedUserId = @AssignedUserId
                     WHERE Id = @Id";
 
             int rowsAffected = await connection.ExecuteAsync(query, new
@@ -122,6 +96,7 @@ public class TaskRepository : Repository<Models.Task>, ITaskRepository
                 task.StartDate,
                 task.CompletedDate,
                 task.PercentageComplete,
+                task.AssignedUserId,
                 task.Id
             });
             return rowsAffected > 0;

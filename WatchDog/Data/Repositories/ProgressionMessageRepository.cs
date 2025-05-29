@@ -17,21 +17,6 @@ public class ProgressionMessageRepository : Repository<ProgressionMessage>, IPro
 
     public override async Task<int> CreateAsync(ProgressionMessage progressionMessage)
     {
-        if (progressionMessage == null)
-        {
-            throw new ArgumentNullException(nameof(progressionMessage), "ProgressionMessage cannot be null");
-        }
-
-        if (string.IsNullOrWhiteSpace(progressionMessage.Content))
-        {
-            throw new ArgumentException("Content cannot be empty", nameof(progressionMessage));
-        }
-
-        if (progressionMessage.SubTaskId <= 0)
-        {
-            throw new ArgumentException("SubTask ID must be a positive number", nameof(progressionMessage));
-        }
-
         try
         {
             await base.CreateAsync(progressionMessage);
