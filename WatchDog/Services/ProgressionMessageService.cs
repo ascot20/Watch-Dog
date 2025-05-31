@@ -9,14 +9,11 @@ namespace WatchDog.Services;
 public class ProgressionMessageService : IProgressionMessageService
 {
     private readonly IProgressionMessageRepository _progressionMessageRepository;
-    private readonly ISubtaskService _subtaskService;
 
     public ProgressionMessageService(
-        IProgressionMessageRepository progressionMessageRepository,
-        ISubtaskService subtaskService)
+        IProgressionMessageRepository progressionMessageRepository)
     {
         _progressionMessageRepository = progressionMessageRepository;
-        _subtaskService = subtaskService;
     }
 
     public async Task<int> CreateMessageAsync(string message, int subTaskId, int creatorId)
@@ -25,12 +22,6 @@ public class ProgressionMessageService : IProgressionMessageService
 
         try
         {
-            bool subtaskExists = await _subtaskService.SubtaskExistsAsync(subTaskId);
-            if (!subtaskExists)
-            {
-                throw new ArgumentException($"Subtask with ID {subTaskId} does not exist");
-            }
-
             var newMessage = new ProgressionMessage
             {
                 Content = message,

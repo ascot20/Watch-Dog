@@ -17,4 +17,5 @@ public class Task:AuditableEntity
     
     //Navigation properties
     public ICollection<SubTask> SubTasks {get;set;} = new List<SubTask>();
+    public string? AssignedUserName {get;set;}
 }

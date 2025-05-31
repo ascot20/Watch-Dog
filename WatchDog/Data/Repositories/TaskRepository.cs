@@ -21,8 +21,15 @@ public class TaskRepository : Repository<Models.Task>, ITaskRepository
         try
         {
             using var connection = this._dbConnectionFactory.CreateConnection();
+            var query = @"
+                SELECT t.*, u.Username AS AssignedUserName
+                FROM tasks t 
+                LEFT JOIN users u ON t.assigneduserid = u.id
+                WHERE t.projectid = @ProjectId
+                ORDER BY t.startdate DESC, t.id DESC";
+
             return await connection.QueryAsync<Models.Task>(
-                "SELECT * FROM Tasks WHERE ProjectId = @ProjectId ORDER BY StartDate",
+                query,
                 new { ProjectId = projectId }
             );
         }
@@ -59,7 +66,7 @@ public class TaskRepository : Repository<Models.Task>, ITaskRepository
                     INSERT INTO Tasks (TaskDescription, ProjectId, AssignedUserId)
                     VALUES (@TaskDescription, @ProjectId, @AssignedUserId)
                     RETURNING Id;";
-            
+
             return await connection.QuerySingleAsync<int>(query, new
             {
                 task.TaskDescription,

@@ -1,0 +1,35 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="clr-namespace:WatchDog.Views.Controls"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="WatchDog.Views.Controls.HeaderControl">
+
+    <Border Classes="Cardtwo" Padding="0">
+        <Grid ColumnDefinitions="*,Auto"
+              Background="{DynamicResource BackgroundDarkerBrush}">
+            <!-- Logo -->
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="16,0">
+                <Image Source="/Assets/logo.ico"
+                       Width="24"
+                       Height="24" />
+                <TextBlock Text="{Binding PageTitle, RelativeSource={RelativeSource AncestorType=local:HeaderControl}}"
+                           Classes="Headingtwo"
+                           VerticalAlignment="Center" Margin="8,0,0,0" />
+            </StackPanel>
+
+
+            <!-- User section -->
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="16,0">
+                <!-- Search Box -->
+                <TextBox Grid.Column="1" Margin="16,8" Height="32" Watermark="Search or jump to..." />
+                <Button Command="{Binding NavigateToDashboardCommand, RelativeSource={RelativeSource AncestorType=local:HeaderControl}}">
+                    <PathIcon Data="{StaticResource DashboardIcon}" Height="16" Width="16" BorderThickness="0.5"></PathIcon>
+                </Button>
+                <Button Content="🔔" />
+                <Button Content="👤" />
+            </StackPanel>
+        </Grid>
+    </Border>
+</UserControl>

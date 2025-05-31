@@ -13,4 +13,5 @@ public interface IUserService
     Task<bool> ChangePasswordAsync(int userId, string oldPassword, string newPassword);
     Task<IEnumerable<User>> GetAllAsync();
     Task<bool> UserExistsAsync(int userId);
+    Task<IEnumerable<User>> SearchUsersAsync(string searchTerm);
 }

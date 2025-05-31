@@ -29,7 +29,16 @@ public class UserService : IUserService
         string password = "default",
         UserRole role = UserRole.User)
     {
-        this.ValidateInputs(password,email);
+        if (string.IsNullOrWhiteSpace(password))
+        {
+            throw new ArgumentException("Password cannot be empty", nameof(password));
+        }
+
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            throw new ArgumentException("Email cannot be empty", nameof(email));
+        }
+
         if (!_authorizationService.IsAdmin())
         {
             throw new UnauthorizedAccessException("Only admins can register new users");
@@ -52,7 +61,7 @@ public class UserService : IUserService
                 PasswordHash = passwordHash,
                 Role = UserRole.User
             };
-            
+
             return await _userRepository.CreateAsync(newUser);
         }
         catch (Exception e)
@@ -63,25 +72,26 @@ public class UserService : IUserService
 
     public async Task<User?> AuthenticateAsync(string email, string password)
     {
-       this.ValidateInputs(password,email); 
-
-        try
+        if (string.IsNullOrWhiteSpace(password))
         {
-            var user = await _userRepository.GetByEmailAsync(email);
-
-            if (user == null)
-            {
-                return null;
-            }
-
-            bool isPasswordValid = BCrypt.Net.BCrypt.Verify(password, user.PasswordHash);
-
-            return isPasswordValid ? user : null;
+            throw new ArgumentException("Password cannot be empty", nameof(password));
         }
-        catch (Exception e)
+
+        if (string.IsNullOrWhiteSpace(email))
         {
-            throw new Exception($"Error authenticating user: {e.Message}");
+            throw new ArgumentException("Email cannot be empty", nameof(email));
         }
+
+        var user = await _userRepository.GetByEmailAsync(email);
+
+        if (user == null)
+        {
+            return null;
+        }
+
+        bool isPasswordValid = BCrypt.Net.BCrypt.Verify(password, user.PasswordHash);
+
+        return isPasswordValid ? user : null;
     }
 
     public async Task<User?> GetUserAsync(int id)
@@ -105,6 +115,16 @@ public class UserService : IUserService
         }
     }
 
+    public async Task<IEnumerable<User>> SearchUsersAsync(string searchTerm)
+    {
+        if (string.IsNullOrWhiteSpace(searchTerm))
+        {
+            return await this.GetAllAsync();
+        }
+        
+        return await _userRepository.SearchAsync(searchTerm);
+    }
+
     public async Task<string> GetUserNameAsync(int id)
     {
         try
@@ -114,14 +134,13 @@ public class UserService : IUserService
             {
                 throw new ArgumentException($"User with ID {id} does not exist");
             }
-        
+
             return user.Username;
         }
         catch (Exception e)
         {
             throw new Exception($"Error retrieving username for user ID {id}: {e.Message}", e);
         }
-
     }
 
     public async Task<IEnumerable<User>> GetAllAsync()
@@ -190,19 +209,6 @@ public class UserService : IUserService
         catch (Exception e)
         {
             throw new Exception($"Error checking if user exists: {e.Message}");
-        }
-    }
-
-    private void ValidateInputs(string password, string email)
-    {
-        if (string.IsNullOrWhiteSpace(password))
-        {
-            throw new ArgumentException("Password cannot be empty", nameof(password));
-        }
-
-        if (string.IsNullOrWhiteSpace(email))
-        {
-            throw new ArgumentException("Email cannot be empty", nameof(email));
         }
     }
 }

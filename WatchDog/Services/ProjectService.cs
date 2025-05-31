@@ -35,34 +35,38 @@ public class ProjectService : IProjectService
 
     public async Task<int> CreateProjectAsync(string title, string description)
     {
-        this.ValidateProject(title);
         this.EnsureAdminAccess();
-
-        try
+        
+        if (string.IsNullOrWhiteSpace(title))
         {
-            var newProject = new Project
-            {
-                Title = title,
-                Description = description,
-                StartDate = DateTime.UtcNow,
-                Status = ProjectStatus.NotStarted
-            };
-
-            int projectId = await _projectRepository.CreateAsync(newProject);
-
-            await _timeLineMessageService.CreateMessageAsync(
-                message: $"Project '{title}' has been created",
-                creatorId: _authorizationService.GetCurrentUserId(),
-                type: MessageType.Announcement,
-                projectId: projectId,
-                isPinned: true
-            );
-            return projectId;
+            throw new ArgumentException("Project title cannot be empty");
         }
-        catch (Exception e)
+
+        bool titleExists = await _projectRepository.ExistsByTitleAsync(title);
+        if (titleExists)
         {
-            throw new Exception($"Error creating project: {e.Message}");
+            throw new ArgumentException("A project with the same title already exists");       
         }
+        
+
+        var newProject = new Project
+        {
+            Title = title,
+            Description = description,
+            StartDate = DateTime.UtcNow,
+            Status = ProjectStatus.NotStarted
+        };
+
+        int projectId = await _projectRepository.CreateAsync(newProject);
+
+        await _timeLineMessageService.CreateMessageAsync(
+            message: $"Project '{title}' has been created",
+            creatorId: _authorizationService.GetCurrentUserId(),
+            type: MessageType.Announcement,
+            projectId: projectId,
+            isPinned: true
+        );
+        return projectId;
     }
 
     public async Task<Project?> GetProjectAsync(int projectId)
@@ -93,9 +97,9 @@ public class ProjectService : IProjectService
     {
         this.EnsureAdminAccess();
 
-        try
-        {
             var projectToUpdate = await this.GetProjectOrThrowAsync(projectId);
+            projectToUpdate.Status = status;
+            
             if (status == ProjectStatus.Completed)
             {
                 await _timeLineMessageService.CreateMessageAsync(
@@ -108,11 +112,6 @@ public class ProjectService : IProjectService
             }
 
             return await _projectRepository.UpdateAsync(projectToUpdate);
-        }
-        catch (Exception e)
-        {
-            throw new Exception($"Error updating project: {e.Message}");
-        }
     }
 
 
@@ -146,7 +145,7 @@ public class ProjectService : IProjectService
             if (result)
             {
                 string addedUsername = await _userService.GetUserNameAsync(userId);
-                
+
                 string message = !string.IsNullOrEmpty(addedUsername)
                     ? $"{addedUsername} has been added to the project"
                     : "A new team member has been added to the project";
@@ -182,7 +181,7 @@ public class ProjectService : IProjectService
             {
                 // Reassign to project creator
                 task.AssignedUserId = _authorizationService.GetCurrentUserId();
-                await _taskService.UpdateTaskAsync(taskId:task.Id, assignedUserId:task.AssignedUserId);
+                await _taskService.UpdateTaskAsync(taskId: task.Id, assignedUserId: task.AssignedUserId);
             }
 
             // Remove the user from the project
@@ -229,14 +228,6 @@ public class ProjectService : IProjectService
         catch (Exception e)
         {
             throw new Exception($"Error checking if project exists: {e.Message}");
-        }
-    }
-
-    private void ValidateProject(string title)
-    {
-        if (string.IsNullOrWhiteSpace(title))
-        {
-            throw new ArgumentException("Project title cannot be empty");
         }
     }
 

@@ -17,22 +17,51 @@ public class ProjectRepository : Repository<Project>, IProjectRepository
 
     public override async Task<int> CreateAsync(Project project)
     {
-        await base.CreateAsync(project);
-        using var connection = _dbConnectionFactory.CreateConnection();
+        try
+        {
+            await base.CreateAsync(project);
+            using var connection = _dbConnectionFactory.CreateConnection();
 
-        var query = $@"INSERT INTO Projects (Title, Description, CreatedDate, StartDate, EndDate, Status)
-                       VALUES (@Title, @Description, @CreatedDate, @StartDate, @EndDate, @Status)
+            var query = $@"INSERT INTO Projects (Title, Description, CreatedDate, StartDate, EndDate, Status)
+                       VALUES (@Title, @Description, @CreatedDate, @StartDate, @EndDate, @Status::project_status)
                        RETURNING Id;";
 
-        return await connection.QuerySingleAsync<int>(query, new
+            return await connection.QuerySingleAsync<int>(query, new
+            {
+                project.Title,
+                project.Description,
+                project.CreatedDate,
+                project.StartDate,
+                project.EndDate,
+                Status = project.Status.ToString()
+            });
+        }
+        catch (Exception e)
         {
-            project.Title,
-            project.Description,
-            project.CreatedDate,
-            project.StartDate,
-            project.EndDate,
-            project.Status,
-        });
+            throw new Exception("Error creating project");
+        }
+    }
+
+    public async Task<bool> ExistsByTitleAsync(string title)
+    {
+        try
+        {
+            using var connection = _dbConnectionFactory.CreateConnection();
+
+            var query = @"
+                SELECT COUNT(1)
+                FROM projects
+                WHERE LOWER(title) = LOWER(@Title);";
+
+            int count = await connection.ExecuteScalarAsync<int>(query, new { Title = title });
+
+            return count > 0;
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
     }
 
     public override async Task<bool> UpdateAsync(Project project)
@@ -43,7 +72,7 @@ public class ProjectRepository : Repository<Project>, IProjectRepository
 
             var query = @"
                 UPDATE Projects
-                SET Status = @Status,
+                SET Status = @Status::project_status,
                     EndDate = CASE 
                                 WHEN @Status = 'Completed' THEN CURRENT_TIMESTAMP 
                                 ELSE EndDate 
@@ -54,8 +83,8 @@ public class ProjectRepository : Repository<Project>, IProjectRepository
                 query,
                 new
                 {
-                    ProjectId = project.Id,
-                    project.Status
+                    ProjectId = project.Id, 
+                    Status = project.Status.ToString()
                 }
             );
 
@@ -63,7 +92,8 @@ public class ProjectRepository : Repository<Project>, IProjectRepository
         }
         catch (Exception e)
         {
-            throw new Exception($"Database error in {nameof(UpdateAsync)}: {e.Message}");
-        } 
+            Console.WriteLine(e.Message);
+            throw new Exception($"Could not update project");
+        }
     }
 }

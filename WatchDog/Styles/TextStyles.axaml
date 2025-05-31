@@ -10,6 +10,22 @@
         <Setter Property="Margin" Value="0,0,0,16"/>
     </Style>
     
+    <Style Selector="TextBlock.Headingtwo">
+        <Setter Property="Foreground" Value="{DynamicResource TextLightBrush}"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="FontSize" Value="18"/>
+        <Setter Property="HorizontalAlignment" Value="Center"/>
+        <Setter Property="Margin" Value="0,0,0,16"/>
+    </Style>
+    
+    <Style Selector="TextBlock.Headingthree">
+        <Setter Property="Foreground" Value="{DynamicResource TextLightBrush}"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="HorizontalAlignment" Value="Center"/>
+        <Setter Property="Margin" Value="0,0,0,16"/>
+    </Style>
+    
     <!-- Label Style -->
     <Style Selector="TextBlock.Label">
         <Setter Property="Foreground" Value="{DynamicResource TextLightBrush}"/>

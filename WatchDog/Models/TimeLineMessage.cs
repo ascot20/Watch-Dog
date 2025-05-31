@@ -12,7 +12,7 @@ public class TimeLineMessage:Message
     public required int ProjectId{get;set;}
     
     //Navigation properties
-    public ICollection<TimeLineReply> Replies {get;set;} = new List<TimeLineReply>();
+    public string? AuthorName {get;set;}
 }
 
 public enum MessageType

@@ -12,23 +12,17 @@ public class TaskService : ITaskService
 {
     private readonly ITaskRepository _taskRepository;
     private readonly ISubtaskService _subtaskService;
-    private readonly IUserService _userService;
-    private readonly IProjectService _projectService;
     private readonly ITimeLineMessageService _timeLineMessageService;
     private readonly IAuthorizationService _authorizationService;
 
     public TaskService(
         ITaskRepository taskRepository,
         ISubtaskService subtaskService,
-        IUserService userService,
-        IProjectService projectService,
         ITimeLineMessageService timeLineMessageService,
         IAuthorizationService authorizationService)
     {
         _taskRepository = taskRepository;
         _subtaskService = subtaskService;
-        _userService = userService;
-        _projectService = projectService;
         _timeLineMessageService = timeLineMessageService;
         _authorizationService = authorizationService;
     }
@@ -44,18 +38,6 @@ public class TaskService : ITaskService
                 throw new UnauthorizedAccessException("Only administrators can create tasks");
             }
 
-            bool projectExists = await _projectService.ProjectExistsAsync(projectId);
-            if (!projectExists)
-            {
-                throw new ArgumentException($"Project with ID {projectId} does not exist");
-            }
-
-            var user = await _userService.GetUserAsync(assignedUserId);
-            if (user == null)
-            {
-                throw new ArgumentException($"User with ID {assignedUserId} does not exist");
-            }
-
             var newTask = new Task
             {
                 TaskDescription = description,
@@ -66,7 +48,7 @@ public class TaskService : ITaskService
             int taskId = await _taskRepository.CreateAsync(newTask);
 
             await _timeLineMessageService.CreateMessageAsync(
-                message: $"Task '{description}' has been created and assigned to {user.Username}",
+                message: $"Task '{description}' has been created",
                 type: MessageType.Update,
                 isPinned: false,
                 projectId: projectId,
@@ -110,12 +92,6 @@ public class TaskService : ITaskService
     {
         try
         {
-            bool userAuthorized = await _authorizationService.IsUserAuthorizedForTask(taskId);
-            if (!userAuthorized)
-            {
-                throw new UnauthorizedAccessException("You are not authorized to update this task");
-            }
-            
             var existingTask = await _taskRepository.GetByIdAsync(taskId);
             if (existingTask == null)
             {
@@ -160,15 +136,15 @@ public class TaskService : ITaskService
             if (result && wasJustCompleted)
             {
                 // Create a timeline message for task completion
-                var assignedUserName =_authorizationService.GetCurrentUserName(); 
+                var assignedUserName = _authorizationService.GetCurrentUserName();
 
                 await _timeLineMessageService.CreateMessageAsync(
-                    message:$"Task '{description}' has been completed by {assignedUserName}",
+                    message: $"Task '{description}' has been completed by {assignedUserName}",
                     type: MessageType.Milestone,
                     isPinned: false,
-                    projectId:existingTask.ProjectId,
+                    projectId: existingTask.ProjectId,
                     creatorId: _authorizationService.GetCurrentUserId()
-                    );
+                );
             }
 
             return result;
@@ -176,7 +152,7 @@ public class TaskService : ITaskService
         catch (Exception e)
         {
             throw new Exception($"Error updating task: {e.Message}", e);
-        } 
+        }
     }
 
     public async Task<IEnumerable<Task>> GetByAssignedUserIdAsync(int userId)
@@ -218,10 +194,10 @@ public class TaskService : ITaskService
             await _taskRepository.DeleteAsync(taskId);
 
             await _timeLineMessageService.CreateMessageAsync(
-                message:$"Task '{task.TaskDescription}' has been deleted",
+                message: $"Task '{task.TaskDescription}' has been deleted",
                 type: MessageType.Update,
                 isPinned: false,
-                projectId:task.ProjectId,
+                projectId: task.ProjectId,
                 creatorId: _authorizationService.GetCurrentUserId());
 
             return true;

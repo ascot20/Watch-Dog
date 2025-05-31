@@ -1,0 +1,138 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:WatchDog.ViewModels"
+             xmlns:controls="using:WatchDog.Views.Controls"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="WatchDog.Views.DashboardView"
+             x:DataType="vm:DashboardViewModel">
+
+
+    <Grid RowDefinitions="56,*" Background="{DynamicResource BackgroundDarkerBrush}">
+        <!-- Header -->
+        <controls:HeaderControl Grid.Row="0" PageTitle="Dashboard" NavigateToDashboardCommand="{Binding NavigateToDashboardCommand}"/>
+        <!-- Main Content -->
+        <Grid Grid.Row="1" ColumnDefinitions="270, *, 300">
+            <!-- Left Sidebar -->
+            <Border Grid.Column="0" Classes="Card" CornerRadius="0">
+                <ScrollViewer>
+                    <StackPanel>
+
+                        <Grid ColumnDefinitions="*, Auto">
+                            <TextBlock Text="Your Projects" Classes="Headingthree" HorizontalAlignment="Left"
+                                       Margin="1,20" />
+                            <Button Classes="PrimaryButton"
+                                    Grid.Column="1"
+                                    Command="{Binding NavigateToNewProjectCommand}"
+                                    IsVisible="{Binding IsAdmin}">
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <PathIcon Data="{StaticResource AddProjectIcon}" Width="16" Height="16" />
+                                    <TextBlock Text="New" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+
+                        <!-- Projects List -->
+                        <ItemsControl ItemsSource="{Binding MyProjects}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Command="{Binding $parent[UserControl].((vm:DashboardViewModel)DataContext).NavigateToProjectCommand}" CommandParameter="{Binding}">
+                                        <Grid Margin="0,4" ColumnDefinitions="16, *">
+                                            <TextBlock Grid.Column="0" Text="📁" VerticalAlignment="Center" />
+                                            <TextBlock Grid.Column="1" Text="{Binding Title}" Margin="8,0,0,0"
+                                                       VerticalAlignment="Center" />
+                                        </Grid> 
+                                    </Button>
+                                    
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+
+
+            <!-- Main Content Area -->
+            <ScrollViewer Grid.Column="1" Padding="24" VerticalScrollBarVisibility="Hidden">
+                <StackPanel>
+                    <Grid Margin="0,0,0,16" ColumnDefinitions="*,Auto">
+                        <TextBlock Grid.Column="0" Text="Feed" FontSize="24" FontWeight="Bold" />
+                        <Button Grid.Column="1" Content="Filter" />
+                    </Grid>
+
+                    <!--Loading indicator-->
+                    <ProgressBar IsIndeterminate="True"
+                                 IsVisible="{Binding IsLoading}"
+                                 Margin="0,16" />
+
+                    <ItemsControl ItemsSource="{Binding FeedProjects}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Classes="Card">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Grid.Column="0" Text="📁" FontSize="24"
+                                                   VerticalAlignment="Top" Margin="0,0,16,0" />
+
+                                        <StackPanel Grid.Column="1">
+                                            <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
+                                            <TextBlock Text="{Binding Description}"
+                                                       TextWrapping="Wrap" Margin="0,4,0,0" />
+                                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                                <TextBlock Text="{Binding Id}" FontSize="12"
+                                                           Padding="4" Background="#e1e4e8" />
+                                                <TextBlock Text="{Binding CreatedDate}" Classes="secondary"
+                                                           FontSize="12" Margin="8,0,0,0" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </StackPanel>
+
+                                        <Border Grid.Column="2"
+                                                CornerRadius="12" Padding="8,4" VerticalAlignment="Top">
+                                            <TextBlock Text="{Binding Status }" Foreground="White" FontSize="12" />
+                                        </Border>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- Right Sidebar -->
+            <ScrollViewer Grid.Column="2" Margin="4,16,16,16">
+                <Grid RowDefinitions="Auto, Auto">
+                    <Border Classes="Cardtwo">
+                        <StackPanel>
+                            <!-- Your Task -->
+                            <TextBlock Text="Your Tasks" Classes="Headingthree" Margin="12,12,0,12" />
+                            <ItemsControl ItemsSource="{Binding MyTasks}" Margin="12, 0, 12, 12">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0,0,0,12" ColumnDefinitions="*, Auto">
+                                            <TextBlock Text="{Binding TaskDescription }" TextWrapping="Wrap"
+                                                       HorizontalAlignment="Left"
+                                                       VerticalAlignment="Center" />
+
+                                            <TextBlock Grid.Column="1"
+                                                       Text="{Binding PercentageComplete, StringFormat='{}{0}%'}"
+                                                       HorizontalAlignment="Right"
+                                                       VerticalAlignment="Center" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+
+
+</UserControl>

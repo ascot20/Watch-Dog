@@ -8,13 +8,11 @@ using WatchDog.Models;
 
 namespace WatchDog.Data.Repositories;
 
-public class UserRepository: Repository<User>, IUserRepository
+public class UserRepository : Repository<User>, IUserRepository
 {
-    
     public UserRepository(IDbConnectionFactory dbConnectionFactory)
         : base(dbConnectionFactory, "Users")
     {
-        
     }
 
     public override async Task<int> CreateAsync(User user)
@@ -22,7 +20,7 @@ public class UserRepository: Repository<User>, IUserRepository
         try
         {
             await base.CreateAsync(user);
-        
+
             using var connection = this._dbConnectionFactory.CreateConnection();
 
             var query = @"
@@ -42,9 +40,8 @@ public class UserRepository: Repository<User>, IUserRepository
         {
             throw new Exception($"Database error in {nameof(CreateAsync)}: {e.Message} ");
         }
-        
     }
-    
+
     public async Task<User?> GetByEmailAsync(string email)
     {
         try
@@ -55,11 +52,36 @@ public class UserRepository: Repository<User>, IUserRepository
                 new { Email = email }
             );
         }
+        catch (Npgsql.NpgsqlException e)
+        {
+            throw new Exception("Error connecting to database");
+        }
         catch (Exception e)
         {
-            throw new Exception($"Database error in {nameof(GetByEmailAsync)}: {e.Message} ");
+            throw new Exception($"User does not exist");
         }
-        
+    }
+
+    public async Task<IEnumerable<User>> SearchAsync(string searchTerm)
+    {
+        try
+        {
+            using var connection = this._dbConnectionFactory.CreateConnection();
+
+            var normalizedSearchTerm = $"%{searchTerm.ToLower()}%";
+
+            var query = @"
+                SELECT * FROM Users
+                WHERE LOWER(Username) LIKE @SearchTerm
+                OR LOWER(Email) LIKE @SearchTerm
+                ORDER BY Username";
+            
+            return await connection.QueryAsync<User>(query, new { SearchTerm = normalizedSearchTerm });
+        }
+        catch (Exception e)
+        {
+            throw new Exception($"Database error in {nameof(SearchAsync)}: {e.Message} ");
+        }
     }
 
     public override async Task<bool> UpdateAsync(User user)
@@ -78,10 +100,10 @@ public class UserRepository: Repository<User>, IUserRepository
                 user.PasswordHash,
                 user.Id
             });
-            
+
             return rowsAffected > 0;
         }
-        
+
         catch (Exception e)
         {
             throw new Exception($"Database error in {nameof(UpdateAsync)}: {e.Message} ");

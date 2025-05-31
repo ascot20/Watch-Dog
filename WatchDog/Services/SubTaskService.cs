@@ -10,18 +10,15 @@ namespace WatchDog.Services;
 public class SubTaskService : ISubtaskService
 {
     private readonly ISubTaskRepository _subtaskRepository;
-    private readonly ITaskService _taskService;
     private readonly IProgressionMessageService _progressionMessageService;
     private readonly IAuthorizationService _authorizationService;
 
     public SubTaskService(
         ISubTaskRepository subtaskRepository,
-        ITaskService taskService,
         IProgressionMessageService progressionMessageService,
         IAuthorizationService authorizationService)
     {
         _subtaskRepository = subtaskRepository;
-        _taskService = taskService;
         _progressionMessageService = progressionMessageService;
         _authorizationService = authorizationService;
     }
@@ -32,19 +29,6 @@ public class SubTaskService : ISubtaskService
 
         try
         {
-            bool taskExists = await _taskService.TaskExistsAsync(taskId);
-            if (!taskExists)
-            {
-                throw new ArgumentException($"Task with ID {taskId} does not exist");
-            }
-
-            bool isAuthorized = await _authorizationService.IsUserAuthorizedForTask(taskId);
-            if (!isAuthorized)
-            {
-                throw new UnauthorizedAccessException(
-                    $"You are not authorized to create subtasks for task with ID {taskId}");
-            }
-
             var newSubTask = new SubTask
             {
                 Description = description,
@@ -86,12 +70,6 @@ public class SubTaskService : ISubtaskService
     {
         try
         {
-            bool taskExists = await _taskService.TaskExistsAsync(taskId);
-            if (!taskExists)
-            {
-                throw new ArgumentException($"Task with ID {taskId} does not exist");
-            }
-            
             var subtasks = await _subtaskRepository.GetByTaskIdAsync(taskId);
             return subtasks;
         }
@@ -111,18 +89,6 @@ public class SubTaskService : ISubtaskService
             if (existingSubtask == null)
             {
                 return false;
-            }
-
-            bool taskExists = await _taskService.TaskExistsAsync(existingSubtask.TaskId);
-            if (!taskExists)
-            {
-                throw new ArgumentException($"Task with ID {existingSubtask.TaskId} does not exist");
-            }
-
-            bool isAuthorized = await _authorizationService.IsUserAuthorizedForTask(existingSubtask.TaskId);
-            if (!isAuthorized)
-            {
-                throw new UnauthorizedAccessException($"You are not authorized to update subtask with ID {subTaskId}");
             }
 
             if (!string.IsNullOrEmpty(description) && description != existingSubtask.Description)

@@ -13,11 +13,6 @@ public partial class LoginView : UserControl
         InitializeComponent();
     }
 
-    private void InitializeComponent()
-    {
-        AvaloniaXamlLoader.Load(this);
-    }
-
     private void OnLoginAccountTapped(object sender, TappedEventArgs e)
     {
         if (DataContext is LoginViewModel viewModel)

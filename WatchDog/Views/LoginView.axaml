@@ -7,10 +7,6 @@
              x:Class="WatchDog.Views.LoginView"
              x:DataType="vm:LoginViewModel">
 
-    <Design.DataContext>
-        <vm:LoginViewModel />
-    </Design.DataContext>
-
     <Grid Background="{DynamicResource BackgroundDarkBrush}">
         <StackPanel HorizontalAlignment="Center"
                     VerticalAlignment="Center"
