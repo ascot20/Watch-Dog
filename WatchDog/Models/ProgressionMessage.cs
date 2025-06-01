@@ -5,6 +5,6 @@ namespace WatchDog.Models;
 public class ProgressionMessage:Message
 {
     //Foreign keys
-    public required int SubTaskId { get; set; }
+    public required int TaskId { get; set; }
     
 }

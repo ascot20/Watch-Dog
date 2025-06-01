@@ -16,7 +16,7 @@ public class ProgressionMessageService : IProgressionMessageService
         _progressionMessageRepository = progressionMessageRepository;
     }
 
-    public async Task<int> CreateMessageAsync(string message, int subTaskId, int creatorId)
+    public async Task<int> CreateMessageAsync(string message, int taskId, int creatorId)
     {
         this.ValidateMessage(message);
 
@@ -25,7 +25,7 @@ public class ProgressionMessageService : IProgressionMessageService
             var newMessage = new ProgressionMessage
             {
                 Content = message,
-                SubTaskId = subTaskId,
+                TaskId = taskId,
                 AuthorId = creatorId,
             };
 
@@ -37,16 +37,16 @@ public class ProgressionMessageService : IProgressionMessageService
         }
     }
 
-    public Task<IEnumerable<ProgressionMessage>> GetBySubTaskIdAsync(int subTaskId)
+    public Task<IEnumerable<ProgressionMessage>> GetByTaskIdAsync(int taskId)
     {
         try
         {
-            var messages = _progressionMessageRepository.GetBySubTaskIdAsync(subTaskId);
+            var messages = _progressionMessageRepository.GetByTaskIdAsync(taskId);
             return messages;
         }
         catch (Exception e)
         {
-          throw new Exception($"Error retrieving progression messages for subtask ID {subTaskId}: {e.Message}", e); 
+          throw new Exception($"Error retrieving progression messages for subtask ID {taskId}: {e.Message}", e); 
         }
     }
 

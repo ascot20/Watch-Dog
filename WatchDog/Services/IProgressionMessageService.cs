@@ -6,6 +6,6 @@ namespace WatchDog.Services;
 
 public interface IProgressionMessageService
 {
-    Task<int> CreateMessageAsync(string message, int subTaskId, int creatorId);
-    Task<IEnumerable<ProgressionMessage>> GetBySubTaskIdAsync(int subTaskId);
+    Task<int> CreateMessageAsync(string message, int taskId, int creatorId);
+    Task<IEnumerable<ProgressionMessage>> GetByTaskIdAsync(int taskId);
 }

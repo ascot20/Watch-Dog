@@ -60,21 +60,12 @@ CREATE TABLE IF NOT EXISTS TimeLineMessages
     CreatedDate TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS TimeLineReplies
-(
-    Id                SERIAL PRIMARY KEY,
-    Content           TEXT      NOT NULL,
-    TimeLineMessageId INT       NOT NULL REFERENCES TimeLineMessages (Id) ON DELETE CASCADE,
-    AuthorId          INT REFERENCES Users (Id),
-    CreatedDate       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
 CREATE TABLE IF NOT EXISTS ProgressionMessages
 (
     Id          SERIAL PRIMARY KEY,
     Content     TEXT      NOT NULL,
-    SubTaskId   INT       NOT NULL REFERENCES SubTasks (Id) ON DELETE CASCADE,
-    AuthorId    INT REFERENCES Users (Id),
+    TaskId      INT       NOT NULL REFERENCES Tasks (Id) ON DELETE CASCADE,
+    AuthorId    INT NOT NULL REFERENCES Users (Id),
     CreatedDate TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -90,8 +81,7 @@ CREATE TABLE IF NOT EXISTS UserProjects
 CREATE INDEX idx_tasks_project ON Tasks (ProjectId);
 CREATE INDEX idx_subtasks_task ON SubTasks (TaskId);
 CREATE INDEX idx_timeline_messages_project ON TimeLineMessages (ProjectId);
-CREATE INDEX idx_timeline_replies_message ON TimeLineReplies (TimeLineMessageId);
-CREATE INDEX idx_progression_messages_subtask ON ProgressionMessages (SubTaskId);
+CREATE INDEX idx_progression_messages_subtask ON ProgressionMessages (TaskId);
 CREATE INDEX idx_user_projects_user ON UserProjects (UserId);
 CREATE INDEX idx_user_projects_project ON UserProjects (ProjectId);
 
@@ -118,9 +108,6 @@ ON CONFLICT DO NOTHING;
 
 BEGIN;
 
-DELETE
-FROM TimeLineReplies
-WHERE id > 0;
 DELETE
 FROM ProgressionMessages
 WHERE id > 0;
@@ -277,15 +264,10 @@ VALUES ('Welcome to the Website Redesign project! Let''s make this our best site
         CURRENT_TIMESTAMP - INTERVAL '15 days')
 ON CONFLICT DO NOTHING;
 
-INSERT INTO TimeLineReplies (Content, TimeLineMessageId, AuthorId, CreatedDate)
-VALUES ('The designs look great! I''ll start implementing the frontend right away.', 2, 3,
-        CURRENT_TIMESTAMP - INTERVAL '14 days'),
-       ('I can help with the API work. Let''s sync up tomorrow.', 3, 1, CURRENT_TIMESTAMP - INTERVAL '7 days')
-ON CONFLICT DO NOTHING;
 
-INSERT INTO ProgressionMessages (Content, SubTaskId, AuthorId, CreatedDate)
+INSERT INTO ProgressionMessages (Content, TaskId, AuthorId, CreatedDate)
 VALUES ('Homepage mockup is complete and ready for review', 1, 2, CURRENT_TIMESTAMP - INTERVAL '28 days'),
-       ('Integrated payment provider SDK successfully', 23, 3, CURRENT_TIMESTAMP - INTERVAL '2 days')
+       ('Integrated payment provider SDK successfully', 5, 3, CURRENT_TIMESTAMP - INTERVAL '2 days')
 ON CONFLICT DO NOTHING;
 
 COMMIT;

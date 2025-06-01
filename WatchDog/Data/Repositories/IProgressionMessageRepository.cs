@@ -6,7 +6,7 @@ namespace WatchDog.Data.Repositories;
 
 public interface IProgressionMessageRepository: IRepository<ProgressionMessage>
 {
-    Task<IEnumerable<ProgressionMessage>> GetBySubTaskIdAsync(int subTaskId);
+    Task<IEnumerable<ProgressionMessage>> GetByTaskIdAsync(int taskId);
     Task<IEnumerable<ProgressionMessage>> GetByCreatorIdAsync(int creatorId);
-    Task<int> GetTotalCountForSubTaskAsync(int subTaskId);
+    Task<int> GetTotalCountForTaskAsync(int taskId);
 }

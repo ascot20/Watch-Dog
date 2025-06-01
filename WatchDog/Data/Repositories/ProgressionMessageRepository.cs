@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Dapper;
 using WatchDog.Data.Factories;
@@ -24,14 +23,14 @@ public class ProgressionMessageRepository : Repository<ProgressionMessage>, IPro
             using var connection = this._dbConnectionFactory.CreateConnection();
 
             var query = @"
-                INSERT INTO ProgressionMessages (Content, SubTaskId, AuthorId, CreatedDate)
-                VALUES (@Content, @SubTaskId, @AuthorId, @CreatedDate)
+                INSERT INTO ProgressionMessages (Content, Taskid, AuthorId, CreatedDate)
+                VALUES (@Content, @TaskId, @AuthorId, @CreatedDate)
                 RETURNING Id";
 
             return await connection.QuerySingleAsync<int>(query, new
             {
                 progressionMessage.Content,
-                progressionMessage.SubTaskId,
+                progressionMessage.TaskId,
                 progressionMessage.AuthorId,
                 progressionMessage.CreatedDate,
             });
@@ -59,36 +58,36 @@ public class ProgressionMessageRepository : Repository<ProgressionMessage>, IPro
  
     }
 
-    public async Task<IEnumerable<ProgressionMessage>> GetBySubTaskIdAsync(int subTaskId)
+    public async Task<IEnumerable<ProgressionMessage>> GetByTaskIdAsync(int taskId)
     {
         try
         {
             using var connection = this._dbConnectionFactory.CreateConnection();
             return await connection.QueryAsync<ProgressionMessage>(
-                "SELECT * FROM ProgressionMessages WHERE SubTaskId = @SubTaskId ORDER BY CreatedDate DESC",
-                new { SubTaskId = subTaskId }
+                "SELECT * FROM ProgressionMessages WHERE TaskId = @TaskId ORDER BY CreatedDate DESC",
+                new { TaskId = taskId }
             );
         }
         catch (Exception e)
         {
-            throw new Exception($"Database error in {nameof(GetBySubTaskIdAsync)}: {e.Message}");
+            throw new Exception($"Database error in {nameof(GetByTaskIdAsync)}: {e.Message}");
         }
  
     }
 
-    public async Task<int> GetTotalCountForSubTaskAsync(int subTaskId)
+    public async Task<int> GetTotalCountForTaskAsync(int taskId)
     {
         try
         {
             using var connection = this._dbConnectionFactory.CreateConnection();
             return await connection.ExecuteScalarAsync<int>(
-                "SELECT COUNT(*) FROM ProgressionMessages WHERE SubTaskId = @SubTaskId",
-                new { SubTaskId = subTaskId }
+                "SELECT COUNT(*) FROM progressionmessages WHERE TaskId = @SubTaskId",
+                new { TaskId = taskId }
             );
         }
         catch (Exception e)
         {
-            throw new Exception($"Database error in {nameof(GetTotalCountForSubTaskAsync)}: {e.Message}");
+            throw new Exception($"Database error in {nameof(GetTotalCountForTaskAsync)}: {e.Message}");
         }
     }
 }

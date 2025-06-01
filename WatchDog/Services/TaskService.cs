@@ -12,12 +12,14 @@ public class TaskService : ITaskService
 {
     private readonly ITaskRepository _taskRepository;
     private readonly ISubtaskService _subtaskService;
+    private readonly IProgressionMessageService _progressionMessageService;
     private readonly ITimeLineMessageService _timeLineMessageService;
     private readonly IAuthorizationService _authorizationService;
 
     public TaskService(
         ITaskRepository taskRepository,
         ISubtaskService subtaskService,
+        IProgressionMessageService progressionMessageService,
         ITimeLineMessageService timeLineMessageService,
         IAuthorizationService authorizationService)
     {
@@ -25,6 +27,7 @@ public class TaskService : ITaskService
         _subtaskService = subtaskService;
         _timeLineMessageService = timeLineMessageService;
         _authorizationService = authorizationService;
+        _progressionMessageService = progressionMessageService;
     }
 
     public async Task<int> CreateTaskAsync(string description, int projectId, int assignedUserId)
@@ -72,6 +75,7 @@ public class TaskService : ITaskService
             if (task != null)
             {
                 task.SubTasks = (await _subtaskService.GetSubtasksByTaskIdAsync(taskId)).ToList();
+                task.ProgressionMessages = (await _progressionMessageService.GetByTaskIdAsync(taskId)).ToList();
             }
 
             return task;
@@ -168,17 +172,23 @@ public class TaskService : ITaskService
         }
     }
 
-    public Task<IEnumerable<Task>> GetByProjectIdAsync(int projectId)
+    public async Task<IEnumerable<Task>> GetByProjectIdAsync(int projectId)
     {
-        try
+        var tasks = await _taskRepository.GetByProjectIdAsync(projectId);
+
+        if (tasks != null)
         {
-            var tasks = _taskRepository.GetByProjectIdAsync(projectId);
-            return tasks;
+            var tasksList = tasks.ToList();
+            foreach (var task in tasksList)
+            {
+                task.SubTasks = (await _subtaskService.GetSubtasksByTaskIdAsync(task.Id)).ToList();
+                task.ProgressionMessages = (await _progressionMessageService.GetByTaskIdAsync(task.Id)).ToList();
+            }
+
+            return tasksList;
         }
-        catch (Exception e)
-        {
-            throw new Exception($"Error retrieving tasks by project ID {projectId}: {e.Message}", e);
-        }
+
+        return Enumerable.Empty<Task>();
     }
 
     public async Task<bool> DeleteTaskAsync(int taskId)

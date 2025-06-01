@@ -13,9 +13,6 @@ public class SubTask:AuditableEntity
     //Foreign keys
     public required int TaskId { get; set; }
     public required int CreatedById { get; set; }
-    
-    //Navigation properties
-    public ICollection<ProgressionMessage> ProgressionMessages {get;set;} = new List<ProgressionMessage>();
 }
 
 public enum SubTaskStatus

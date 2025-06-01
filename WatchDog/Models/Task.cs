@@ -17,5 +17,6 @@ public class Task:AuditableEntity
     
     //Navigation properties
     public ICollection<SubTask> SubTasks {get;set;} = new List<SubTask>();
+    public ICollection<ProgressionMessage> ProgressionMessages {get;set;} = new List<ProgressionMessage>();
     public string? AssignedUserName {get;set;}
 }
