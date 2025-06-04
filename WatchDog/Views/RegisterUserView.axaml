@@ -1,0 +1,133 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:WatchDog.ViewModels"
+             xmlns:controls="using:WatchDog.Views.Controls"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="WatchDog.Views.RegisterUserView"
+             x:DataType="vm:RegisterUserViewModel">
+
+    <Grid RowDefinitions="56,*" Background="{DynamicResource BackgroundDarkerBrush}">
+        <!-- Header -->
+        <controls:HeaderControl Grid.Row="0" PageTitle="Register User"
+                                NavigateToDashboardCommand="{Binding NavigateToDashboardCommand}" />
+        <!-- Main Content -->
+        <Grid Grid.Row="1" Background="{DynamicResource BackgroundDarkBrush}">
+            <StackPanel HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Width="400">
+
+                <!-- Logo -->
+                <Image Source="/Assets/logo.ico"
+                       Width="48"
+                       Height="48"
+                       Margin="0,0,0,20" />
+
+                <!-- Registration header -->
+                <TextBlock Text="Register New User"
+                           Classes="Heading"
+                           HorizontalAlignment="Center"
+                           Margin="0,0,0,16" />
+
+                <!-- Registration form box -->
+                <Border Background="{DynamicResource ContainerDarkBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="6"
+                        Padding="20">
+                    <StackPanel>
+
+                        <!-- Error message-->
+                        <TextBlock Text="{Binding ErrorMessage}"
+                                   Classes="ErrorMessage"
+                                   IsVisible="{Binding !!ErrorMessage}"
+                                   Margin="0,0,0,16" />
+
+                        <!-- Username input -->
+                        <TextBlock Text="Username"
+                                   Classes="Label" />
+                        <TextBox Name="UsernameTextBox"
+                                 Height="32"
+                                 CornerRadius="6"
+                                 BorderBrush="{DynamicResource BorderBrush}"
+                                 BorderThickness="1"
+                                 Margin="0,0,0,16"
+                                 Watermark="Enter username"
+                                 Text="{Binding Username}" />
+
+                        <!-- Email input -->
+                        <TextBlock Text="Email address"
+                                   Classes="Label" />
+                        <TextBox Name="EmailTextBox"
+                                 Height="32"
+                                 CornerRadius="6"
+                                 BorderBrush="{DynamicResource BorderBrush}"
+                                 BorderThickness="1"
+                                 Margin="0,0,0,16"
+                                 Watermark="Enter email"
+                                 Text="{Binding Email}" />
+
+                        <!-- Password input -->
+                        <TextBlock Text="Password"
+                                   Classes="Label" />
+                        <TextBox Name="PasswordTextBox"
+                                 PasswordChar="•"
+                                 Height="32"
+                                 CornerRadius="6"
+                                 BorderBrush="{DynamicResource BorderBrush}"
+                                 BorderThickness="1"
+                                 Margin="0,0,0,16"
+                                 Watermark="Enter password"
+                                 Text="{Binding Password}" />
+
+                        <!-- Confirm Password input -->
+                        <TextBlock Text="Confirm Password"
+                                   Classes="Label" />
+                        <TextBox Name="ConfirmPasswordTextBox"
+                                 PasswordChar="•"
+                                 Height="32"
+                                 CornerRadius="6"
+                                 BorderBrush="{DynamicResource BorderBrush}"
+                                 BorderThickness="1"
+                                 Margin="0,0,0,24"
+                                 Watermark="Confirm password"
+                                 Text="{Binding ConfirmPassword}" />
+
+                        <!-- Is Admin checkbox-->
+                        <CheckBox IsChecked="{Binding IsUserAdmin}"
+                                  Content="Make this user an administrator"
+                                  Margin="0,0,0,24"
+                                  IsVisible="{Binding IsCurrentUserAdmin}" />
+
+                        <!-- Register button -->
+                        <Button Content="Register User"
+                                Classes="PrimaryButton"
+                                HorizontalAlignment="Stretch"
+                                Command="{Binding RegiterUserCommand}"
+                                IsEnabled="{Binding !IsLoading}" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Success message -->
+                <Border Background="#2b8a3e"
+                        CornerRadius="6"
+                        Padding="16"
+                        Margin="0,16,0,0"
+                        IsVisible="{Binding IsSuccess}">
+                    <StackPanel>
+                        <TextBlock Text="User registered successfully!"
+                                   Foreground="White"
+                                   FontWeight="SemiBold" />
+                        <TextBlock Text="You can now return to the dashboard."
+                                   Foreground="White"
+                                   Opacity="0.8"
+                                   Margin="0,4,0,0" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Grid>
+    </Grid>
+
+
+</UserControl>
