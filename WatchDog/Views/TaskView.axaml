@@ -1,0 +1,242 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:WatchDog.ViewModels"
+             xmlns:controls="using:WatchDog.Views.Controls"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="WatchDog.Views.TaskView"
+             x:DataType="vm:TaskViewModel">
+    <Grid RowDefinitions="56,*" Background="{DynamicResource BackgroundDarkerBrush}">
+        <!-- Header -->
+        <controls:HeaderControl Grid.Row="0"
+                                PageTitle="{Binding Task.TaskDescription, FallbackValue='Task Details'}"
+                                NavigateToDashboardCommand="{Binding NavigateToDashboardCommand}" />
+
+        <!-- Main Content -->
+        <Grid Grid.Row="1" Margin="16">
+            <!-- Loading indicator -->
+            <ProgressBar IsIndeterminate="True"
+                         IsVisible="{Binding IsLoading}"
+                         VerticalAlignment="Top" />
+
+            <!-- Error message -->
+            <TextBlock Text="{Binding ErrorMessage}"
+                       IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                       Foreground="Red"
+                       VerticalAlignment="Top"
+                       HorizontalAlignment="Center"
+                       Margin="0,20,0,0" />
+
+            <ScrollViewer IsVisible="{Binding !IsLoading}">
+                <StackPanel Spacing="20">
+                    <!-- Task Details -->
+                    <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                            BorderThickness="1"
+                            CornerRadius="4"
+                            Padding="16">
+                        <StackPanel Spacing="12">
+                            <TextBlock Text="Task Details"
+                                       FontWeight="Bold"
+                                       FontSize="18" />
+
+                            <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto">
+                                <TextBlock Text="Description:" Grid.Row="0" Grid.Column="0" FontWeight="SemiBold"
+                                           Margin="0,0,8,0" />
+                                <TextBlock Text="{Binding Task.TaskDescription}" Grid.Row="0" Grid.Column="1"
+                                           TextWrapping="Wrap" />
+
+                                <TextBlock Text="Remarks:" Grid.Row="1" Grid.Column="0" FontWeight="SemiBold"
+                                           Margin="0,8,8,0" />
+                                <TextBlock Text="{Binding Task.Remarks}" Grid.Row="1" Grid.Column="1"
+                                           TextWrapping="Wrap" Margin="0,8,0,0" />
+                                <TextBlock Text="Progress:" Grid.Row="2" Grid.Column="0" FontWeight="SemiBold"
+                                           Margin="0,8,8,0" />
+                                <Grid Grid.Row="2" Grid.Column="1" ColumnDefinitions="*,Auto">
+                                    <ProgressBar Value="{Binding Task.PercentageComplete}"
+                                                 Maximum="100"
+                                                 Height="8"
+                                                 Margin="0,8,0,0" />
+                                    <TextBlock Text="{Binding Task.PercentageComplete, StringFormat='{}{0}%'}"
+                                               Grid.Column="1" VerticalAlignment="Center">
+                                    </TextBlock>
+                                </Grid>
+
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Subtasks Section -->
+                    <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                            BorderThickness="1"
+                            CornerRadius="4"
+                            Padding="16">
+                        <StackPanel Spacing="12">
+                            <TextBlock Text="Subtasks"
+                                       FontWeight="Bold"
+                                       FontSize="18" />
+
+                            <!-- Subtasks List -->
+                            <ItemsControl ItemsSource="{Binding Subtasks}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0,0,0,8" ColumnDefinitions="Auto,*,Auto">
+                                            <CheckBox Grid.Column="0"
+                                                      IsChecked="{Binding IsComplete}"
+                                                      Command="{Binding $parent[ItemsControl].((vm:TaskViewModel)DataContext).UpdateSubTaskStatusCommand}"
+                                                      CommandParameter="{Binding}"
+                                                      VerticalAlignment="Center"
+                                                      Margin="0,0,4,0" />
+
+                                            <TextBlock Text="{Binding Description}"
+                                                       Grid.Column="1"
+                                                       VerticalAlignment="Center"
+                                                       Margin="8,0,0,0" />
+                                            <Button Grid.Column="2"
+                                                    Command="{Binding $parent[ItemsControl].((vm:TaskViewModel)DataContext).DeleteSubtaskCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    Content="×"
+                                                    Background="Transparent"
+                                                    Foreground="Red" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <!-- Add Subtask Input -->
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBox Grid.Column="0"
+                                         Watermark="Add a new subtask..."
+                                         Text="{Binding NewSubtask}" />
+                                <Button Grid.Column="1"
+                                        Content="Add"
+                                        Command="{Binding AddSubTaskCommand}"
+                                        Margin="8,0,0,0" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                            BorderThickness="1"
+                            CornerRadius="4"
+                            Padding="16">
+                        <StackPanel Spacing="12">
+                            <TextBlock Text="Remarks"
+                                       FontWeight="Bold"
+                                       FontSize="18" />
+
+                            <!-- Display existing remarks if any -->
+                            <TextBlock Text="{Binding Task.Remarks}"
+                                       TextWrapping="Wrap"
+                                       Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"
+                                       IsVisible="{Binding Task.Remarks, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+
+                            <!-- "No remarks" message when there are no remarks -->
+                            <TextBlock Text="No remarks have been added yet."
+                                       Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                                       FontStyle="Italic"
+                                       IsVisible="{Binding Task.Remarks, Converter={x:Static StringConverters.IsNullOrEmpty}}" />
+
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBox Grid.Column="0"
+                                         Watermark="Add or update remarks..."
+                                         Text="{Binding NewRemarks}"
+                                         AcceptsReturn="True"
+                                         TextWrapping="Wrap"
+                                         Height="80" />
+                                <Button Grid.Column="1"
+                                        Content="Save"
+                                        Command="{Binding UpdateRemarksCommand}"
+                                        Margin="8,0,0,0"
+                                        VerticalAlignment="Bottom" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+
+                    <!-- Progression Messages Section -->
+                    <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                            BorderThickness="1"
+                            CornerRadius="4"
+                            Padding="16">
+                        <StackPanel Spacing="12">
+                            <TextBlock Text="Progress Updates"
+                                       FontWeight="Bold"
+                                       FontSize="18" />
+
+                            <!-- Progression Messages List -->
+                            <ItemsControl ItemsSource="{Binding ProgressionMessages}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <!--  comment -->
+                                        <Grid Margin="0,0,0,16">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+
+                                            <!--  avatar and vertical line -->
+                                            <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                                                <Border Background="{DynamicResource AccentBrush}"
+                                                        Width="32"
+                                                        Height="32"
+                                                        CornerRadius="16">
+                                                    <TextBlock Text="U"
+                                                               Foreground="White"
+                                                               HorizontalAlignment="Center"
+                                                               VerticalAlignment="Center" />
+                                                </Border>
+                                                <Border Width="2"
+                                                        Background="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                                                        HorizontalAlignment="Center"
+                                                        Opacity="0.3"
+                                                        Margin="0,8,0,0" />
+                                            </StackPanel>
+
+                                            <!-- comment content -->
+                                            <Border Grid.Column="1"
+                                                    BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                                                    BorderThickness="1"
+                                                    CornerRadius="4">
+                                                <Grid RowDefinitions="Auto,*">
+                                                    <!-- Comment header -->
+                                                    <Border Grid.Row="0"
+                                                            Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+                                                            Padding="12,8"
+                                                            BorderThickness="0,0,0,1"
+                                                            BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}">
+                                                        <TextBlock
+                                                            Text="{Binding CreatedDate, StringFormat='{}{0:MMMM dd, yyyy - hh:mm tt}'}"
+                                                            FontSize="12"
+                                                            Opacity="0.7" />
+                                                    </Border>
+
+                                                    <!-- Comment body -->
+                                                    <TextBlock Grid.Row="1"
+                                                               Text="{Binding Content}"
+                                                               TextWrapping="Wrap"
+                                                               Padding="12" />
+                                                </Grid>
+                                            </Border>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <!-- Add Progression Message Input -->
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBox Grid.Column="0"
+                                         Watermark="Add a progress update..."
+                                         Text="{Binding NewProgressionMessage}" />
+                                <Button Grid.Column="1"
+                                        Content="Post"
+                                        Command="{Binding AddProgressionMessageCommand}"
+                                        Margin="8,0,0,0" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</UserControl>
