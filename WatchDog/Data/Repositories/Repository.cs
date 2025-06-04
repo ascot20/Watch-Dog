@@ -8,7 +8,7 @@ using Task = System.Threading.Tasks.Task;
 
 namespace WatchDog.Data.Repositories;
 
-public abstract class Repository<T> : IRepository<T> where T:BaseEntity
+public abstract class Repository<T> : IRepository<T> where T:BaseModel
 {
     protected readonly IDbConnectionFactory _dbConnectionFactory;
     protected readonly string _tableName;

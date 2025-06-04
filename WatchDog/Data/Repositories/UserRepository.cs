@@ -25,7 +25,7 @@ public class UserRepository : Repository<User>, IUserRepository
 
             var query = @"
             INSERT INTO Users (Username, Email, PasswordHash, Role, CreatedDate)
-            VALUES (@Username, @Email, @PasswordHash, @Role, @CreatedDate)
+            VALUES (@Username, @Email, @PasswordHash, @Role::user_role, @CreatedDate)
             RETURNING Id;";
 
             return await connection.QuerySingleAsync<int>(query, new
@@ -33,12 +33,14 @@ public class UserRepository : Repository<User>, IUserRepository
                 user.Username,
                 user.Email,
                 user.PasswordHash,
-                user.Role
+                Role = user.Role.ToString(),
+                user.CreatedDate
             });
         }
         catch (Exception e)
         {
-            throw new Exception($"Database error in {nameof(CreateAsync)}: {e.Message} ");
+            Console.WriteLine($"Database error in {nameof(CreateAsync)}: {e.Message} ");
+            throw new Exception($"Database error occurred in creating new user");
         }
     }
 
@@ -75,7 +77,7 @@ public class UserRepository : Repository<User>, IUserRepository
                 WHERE LOWER(Username) LIKE @SearchTerm
                 OR LOWER(Email) LIKE @SearchTerm
                 ORDER BY Username";
-            
+
             return await connection.QueryAsync<User>(query, new { SearchTerm = normalizedSearchTerm });
         }
         catch (Exception e)

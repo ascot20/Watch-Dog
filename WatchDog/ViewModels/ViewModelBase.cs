@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using WatchDog.Services;
 using System.Threading.Tasks;
 using WatchDog.Models;
+using Task = WatchDog.Models.Task;
 
 namespace WatchDog.ViewModels;
 
@@ -33,6 +34,21 @@ public partial class ViewModelBase : ObservableObject
         {
             Navigator.NavigateWithParameter<ProjectViewModel>(project.Id);
         }
+    }
+
+    [RelayCommand]
+    protected void NavigateToTask(Task task)
+    {
+        if (task != null)
+        {
+            Navigator.NavigateWithParameter<TaskViewModel>(task.Id);
+        }
+    }
+
+    [RelayCommand]
+    protected void NavigateToRegister()
+    {
+        Navigator.Navigate<RegisterUserViewModel>();
     }
 
     

@@ -26,8 +26,8 @@ public class UserService : IUserService
     public async Task<int> RegisterAsync(
         string email,
         string username,
-        string password = "default",
-        UserRole role = UserRole.User)
+        string password,
+        UserRole role)
     {
         if (string.IsNullOrWhiteSpace(password))
         {
@@ -44,30 +44,35 @@ public class UserService : IUserService
             throw new UnauthorizedAccessException("Only admins can register new users");
         }
 
-        try
+
+        var existingUser = await _userRepository.GetByEmailAsync(email);
+        if (existingUser != null)
         {
-            var existingUser = await _userRepository.GetByEmailAsync(email);
-            if (existingUser != null)
-            {
-                throw new Exception("User already exists");
-            }
-
-            string passwordHash = BCrypt.Net.BCrypt.HashPassword(password);
-
-            var newUser = new User
-            {
-                Username = username,
-                Email = email,
-                PasswordHash = passwordHash,
-                Role = UserRole.User
-            };
-
-            return await _userRepository.CreateAsync(newUser);
+            throw new Exception("User already exists");
         }
-        catch (Exception e)
+
+        string passwordHash = BCrypt.Net.BCrypt.HashPassword(password);
+
+        var newUser = new User
         {
-            throw new Exception($"Error registering user: {e.Message}");
+            Username = username,
+            Email = email,
+            PasswordHash = passwordHash,
+            Role = role
+        };
+
+        return await _userRepository.CreateAsync(newUser);
+    }
+
+    public Task<User?> GetUserByEmailAsync(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            throw new ArgumentException("Email cannot be empty");
         }
+
+        var user = _userRepository.GetByEmailAsync(email);
+        return user;
     }
 
     public async Task<User?> AuthenticateAsync(string email, string password)
@@ -121,7 +126,7 @@ public class UserService : IUserService
         {
             return await this.GetAllAsync();
         }
-        
+
         return await _userRepository.SearchAsync(searchTerm);
     }
 

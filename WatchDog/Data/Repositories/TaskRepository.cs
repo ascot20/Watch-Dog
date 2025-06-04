@@ -88,20 +88,18 @@ public class TaskRepository : Repository<Models.Task>, ITaskRepository
 
             var query = @"
                     UPDATE Tasks 
-                    SET TaskDescription = @TaskDescription, 
-                        Remarks = @Remarks,
-                        StartDate = @StartDate,
-                        CompletedDate = @CompletedDate,
+                    SET Remarks = @Remarks,
                         PercentageComplete = @PercentageComplete,
+                        CompletedDate = CASE 
+                            WHEN @PercentageComplete = 100 THEN CURRENT_TIMESTAMP 
+                                ELSE CompletedDate 
+                                    END ,
                         AssignedUserId = @AssignedUserId
                     WHERE Id = @Id";
 
             int rowsAffected = await connection.ExecuteAsync(query, new
             {
-                task.TaskDescription,
                 task.Remarks,
-                task.StartDate,
-                task.CompletedDate,
                 task.PercentageComplete,
                 task.AssignedUserId,
                 task.Id
@@ -110,6 +108,7 @@ public class TaskRepository : Repository<Models.Task>, ITaskRepository
         }
         catch (Exception e)
         {
+            Console.WriteLine($"Database error in {nameof(UpdateAsync)}: {e.Message}");
             throw new Exception($"Database error in {nameof(UpdateAsync)}: {e.Message}");
         }
     }

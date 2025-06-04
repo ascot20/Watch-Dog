@@ -88,9 +88,7 @@ public class TaskService : ITaskService
 
     public async Task<bool> UpdateTaskAsync(
         int taskId,
-        string? description = null,
         string? remarks = null,
-        DateTime? startDate = null,
         int? percentageCompleted = null,
         int? assignedUserId = null)
     {
@@ -102,32 +100,18 @@ public class TaskService : ITaskService
                 return false;
             }
 
-            bool wasJustCompleted = percentageCompleted == 100 && existingTask.PercentageComplete < 100;
-
-            // If task is now 100% complete and wasn't before, set the completed date
-            if (wasJustCompleted)
-            {
-                existingTask.CompletedDate = DateTime.UtcNow;
-            }
-
-            if (!string.IsNullOrWhiteSpace(description))
-            {
-                existingTask.TaskDescription = description;
-            }
 
             if (!string.IsNullOrWhiteSpace(remarks))
             {
                 existingTask.Remarks = remarks;
             }
 
-            if (startDate != existingTask.StartDate)
-            {
-                existingTask.StartDate = startDate;
-            }
 
+            bool wasJustCompleted = false;
             if (percentageCompleted != existingTask.PercentageComplete && percentageCompleted != null)
             {
                 existingTask.PercentageComplete = percentageCompleted.Value;
+                wasJustCompleted = percentageCompleted.Value == 100;
             }
 
             if (assignedUserId != null)
@@ -140,10 +124,8 @@ public class TaskService : ITaskService
             if (result && wasJustCompleted)
             {
                 // Create a timeline message for task completion
-                var assignedUserName = _authorizationService.GetCurrentUserName();
-
                 await _timeLineMessageService.CreateMessageAsync(
-                    message: $"Task '{description}' has been completed by {assignedUserName}",
+                    message: $"Task '{existingTask.TaskDescription}' has been completed",
                     type: MessageType.Milestone,
                     isPinned: false,
                     projectId: existingTask.ProjectId,

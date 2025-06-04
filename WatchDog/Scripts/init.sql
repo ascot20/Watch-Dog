@@ -1,6 +1,5 @@
 CREATE TYPE user_role AS ENUM ('SuperAdmin', 'User');
 CREATE TYPE project_status AS ENUM ('NotStarted', 'InProgress', 'Completed', 'Closed');
-CREATE TYPE subtask_status AS ENUM ('NotStarted', 'InProgress', 'Completed', 'OnHold', 'Closed');
 CREATE TYPE message_type AS ENUM ('Update', 'Announcement', 'Milestone', 'Question');
 
 CREATE TABLE IF NOT EXISTS Users
@@ -40,13 +39,13 @@ CREATE TABLE IF NOT EXISTS Tasks
 CREATE TABLE IF NOT EXISTS SubTasks
 (
     Id            SERIAL PRIMARY KEY,
-    Description   VARCHAR(255)   NOT NULL,
+    Description   VARCHAR(255) NOT NULL,
     StartDate     TIMESTAMP,
     CompletedDate TIMESTAMP,
-    Status        subtask_status NOT NULL DEFAULT 'NotStarted',
-    TaskId        INT            NOT NULL REFERENCES Tasks (Id) ON DELETE CASCADE,
-    CreatedById   INT            NOT NULL REFERENCES Users (Id),
-    CreatedDate   TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP
+    IsComplete    BOOLEAN      NOT NULL DEFAULT FALSE,
+    TaskId        INT          NOT NULL REFERENCES Tasks (Id) ON DELETE CASCADE,
+    CreatedById   INT          NOT NULL REFERENCES Users (Id),
+    CreatedDate   TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS TimeLineMessages
@@ -65,7 +64,7 @@ CREATE TABLE IF NOT EXISTS ProgressionMessages
     Id          SERIAL PRIMARY KEY,
     Content     TEXT      NOT NULL,
     TaskId      INT       NOT NULL REFERENCES Tasks (Id) ON DELETE CASCADE,
-    AuthorId    INT NOT NULL REFERENCES Users (Id),
+    AuthorId    INT       NOT NULL REFERENCES Users (Id),
     CreatedDate TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -197,53 +196,35 @@ VALUES ('Design mockups', 'Create wireframes and high-fidelity designs', CURRENT
         CURRENT_DATE - INTERVAL '10 days', 100, 5, 2, CURRENT_TIMESTAMP)
 ON CONFLICT DO NOTHING;
 
-INSERT INTO SubTasks (Description, StartDate, CompletedDate, Status, TaskId, CreatedById, CreatedDate)
-VALUES ('Create homepage mockup', CURRENT_DATE - INTERVAL '30 days', CURRENT_DATE - INTERVAL '28 days', 'Completed', 1,
-        2, CURRENT_TIMESTAMP),
-       ('Create product page mockup', CURRENT_DATE - INTERVAL '28 days', CURRENT_DATE - INTERVAL '25 days', 'Completed',
-        1, 2, CURRENT_TIMESTAMP),
-       ('Create contact page mockup', CURRENT_DATE - INTERVAL '25 days', CURRENT_DATE - INTERVAL '22 days', 'Completed',
-        1, 2, CURRENT_TIMESTAMP),
-       ('Create user account pages mockup', CURRENT_DATE - INTERVAL '22 days', CURRENT_DATE - INTERVAL '15 days',
-        'Completed', 1, 2, CURRENT_TIMESTAMP),
-       ('Implement responsive navigation', CURRENT_DATE - INTERVAL '14 days', CURRENT_DATE - INTERVAL '12 days',
-        'Completed', 2, 2, CURRENT_TIMESTAMP),
-       ('Implement homepage', CURRENT_DATE - INTERVAL '12 days', CURRENT_DATE - INTERVAL '8 days', 'Completed', 2, 2,
-        CURRENT_TIMESTAMP),
-       ('Implement product pages', CURRENT_DATE - INTERVAL '8 days', NULL, 'Completed', 2, 2, CURRENT_TIMESTAMP),
-       ('Implement contact form', CURRENT_DATE - INTERVAL '6 days', NULL, 'Completed', 2, 2, CURRENT_TIMESTAMP),
-       ('Update user API endpoints', CURRENT_DATE - INTERVAL '10 days', CURRENT_DATE - INTERVAL '7 days', 'Completed',
-        3, 3, CURRENT_TIMESTAMP),
-       ('Update product API endpoints', CURRENT_DATE - INTERVAL '7 days', NULL, 'Completed', 3, 3, CURRENT_TIMESTAMP),
-       ('Create order API endpoints', CURRENT_DATE - INTERVAL '4 days', NULL, 'InProgress', 3, 3, CURRENT_TIMESTAMP),
-       ('Design login screen', CURRENT_DATE - INTERVAL '15 days', CURRENT_DATE - INTERVAL '13 days', 'Completed', 4, 2,
-        CURRENT_TIMESTAMP),
-       ('Design main navigation', CURRENT_DATE - INTERVAL '13 days', CURRENT_DATE - INTERVAL '10 days', 'Completed', 4,
-        2, CURRENT_TIMESTAMP),
-       ('Design product screens', CURRENT_DATE - INTERVAL '10 days', CURRENT_DATE - INTERVAL '5 days', 'Completed', 4,
-        2, CURRENT_TIMESTAMP),
-       ('Implement iOS login screen', CURRENT_DATE - INTERVAL '5 days', CURRENT_DATE - INTERVAL '3 days', 'Completed',
-        5, 3, CURRENT_TIMESTAMP),
-       ('Implement iOS navigation', CURRENT_DATE - INTERVAL '3 days', NULL, 'InProgress', 5, 3, CURRENT_TIMESTAMP),
-       ('Implement iOS product screens', CURRENT_DATE - INTERVAL '1 day', NULL, 'NotStarted', 5, 3, CURRENT_TIMESTAMP),
-       ('Implement Android login screen', CURRENT_DATE - INTERVAL '5 days', CURRENT_DATE - INTERVAL '2 days',
-        'Completed', 6, 2, CURRENT_TIMESTAMP),
-       ('Implement Android navigation', CURRENT_DATE - INTERVAL '2 days', NULL, 'InProgress', 6, 2, CURRENT_TIMESTAMP),
-       ('Document payment API endpoints', CURRENT_DATE - INTERVAL '10 days', CURRENT_DATE - INTERVAL '8 days',
-        'Completed', 9, 3, CURRENT_TIMESTAMP),
-       ('Document user API endpoints', CURRENT_DATE - INTERVAL '8 days', CURRENT_DATE - INTERVAL '5 days', 'Completed',
-        9, 3, CURRENT_TIMESTAMP),
-       ('Document order API endpoints', CURRENT_DATE - INTERVAL '5 days', CURRENT_DATE - INTERVAL '2 days', 'Completed',
-        9, 3, CURRENT_TIMESTAMP),
-       ('Integrate payment provider SDK', CURRENT_DATE - INTERVAL '5 days', CURRENT_DATE - INTERVAL '2 days',
-        'Completed', 10, 3, CURRENT_TIMESTAMP),
-       ('Implement payment workflows', CURRENT_DATE - INTERVAL '2 days', NULL, 'InProgress', 10, 3, CURRENT_TIMESTAMP),
-       ('Create email newsletter content', CURRENT_DATE - INTERVAL '60 days', CURRENT_DATE - INTERVAL '55 days',
-        'Completed', 11, 2, CURRENT_TIMESTAMP),
-       ('Create social media content', CURRENT_DATE - INTERVAL '55 days', CURRENT_DATE - INTERVAL '50 days',
-        'Completed', 11, 2, CURRENT_TIMESTAMP),
-       ('Create landing page content', CURRENT_DATE - INTERVAL '50 days', CURRENT_DATE - INTERVAL '40 days',
-        'Completed', 11, 2, CURRENT_TIMESTAMP)
+INSERT INTO SubTasks (Description, StartDate, CompletedDate, IsComplete, TaskId, CreatedById, CreatedDate)
+VALUES
+    ('Create homepage mockup', CURRENT_DATE - INTERVAL '30 days', CURRENT_DATE - INTERVAL '28 days', TRUE, 1, 2, CURRENT_TIMESTAMP),
+    ('Create product page mockup', CURRENT_DATE - INTERVAL '28 days', CURRENT_DATE - INTERVAL '25 days', TRUE, 1, 2, CURRENT_TIMESTAMP),
+    ('Create contact page mockup', CURRENT_DATE - INTERVAL '25 days', CURRENT_DATE - INTERVAL '22 days', TRUE, 1, 2, CURRENT_TIMESTAMP),
+    ('Create user account pages mockup', CURRENT_DATE - INTERVAL '22 days', CURRENT_DATE - INTERVAL '15 days', TRUE, 1, 2, CURRENT_TIMESTAMP),
+    ('Implement responsive navigation', CURRENT_DATE - INTERVAL '14 days', CURRENT_DATE - INTERVAL '12 days', TRUE, 2, 2, CURRENT_TIMESTAMP),
+    ('Implement homepage', CURRENT_DATE - INTERVAL '12 days', CURRENT_DATE - INTERVAL '8 days', TRUE, 2, 2, CURRENT_TIMESTAMP),
+    ('Implement product pages', CURRENT_DATE - INTERVAL '8 days', NULL, TRUE, 2, 2, CURRENT_TIMESTAMP),
+    ('Implement contact form', CURRENT_DATE - INTERVAL '6 days', NULL, TRUE, 2, 2, CURRENT_TIMESTAMP),
+    ('Update user API endpoints', CURRENT_DATE - INTERVAL '10 days', CURRENT_DATE - INTERVAL '7 days', TRUE, 3, 3, CURRENT_TIMESTAMP),
+    ('Update product API endpoints', CURRENT_DATE - INTERVAL '7 days', NULL, TRUE, 3, 3, CURRENT_TIMESTAMP),
+    ('Create order API endpoints', CURRENT_DATE - INTERVAL '4 days', NULL, FALSE, 3, 3, CURRENT_TIMESTAMP),
+    ('Design login screen', CURRENT_DATE - INTERVAL '15 days', CURRENT_DATE - INTERVAL '13 days', TRUE, 4, 2, CURRENT_TIMESTAMP),
+    ('Design main navigation', CURRENT_DATE - INTERVAL '13 days', CURRENT_DATE - INTERVAL '10 days', TRUE, 4, 2, CURRENT_TIMESTAMP),
+    ('Design product screens', CURRENT_DATE - INTERVAL '10 days', CURRENT_DATE - INTERVAL '5 days', TRUE, 4, 2, CURRENT_TIMESTAMP),
+    ('Implement iOS login screen', CURRENT_DATE - INTERVAL '5 days', CURRENT_DATE - INTERVAL '3 days', TRUE, 5, 3, CURRENT_TIMESTAMP),
+    ('Implement iOS navigation', CURRENT_DATE - INTERVAL '3 days', NULL, FALSE, 5, 3, CURRENT_TIMESTAMP),
+    ('Implement iOS product screens', CURRENT_DATE - INTERVAL '1 day', NULL, FALSE, 5, 3, CURRENT_TIMESTAMP),
+    ('Implement Android login screen', CURRENT_DATE - INTERVAL '5 days', CURRENT_DATE - INTERVAL '2 days', TRUE, 6, 2, CURRENT_TIMESTAMP),
+    ('Implement Android navigation', CURRENT_DATE - INTERVAL '2 days', NULL, FALSE, 6, 2, CURRENT_TIMESTAMP),
+    ('Document payment API endpoints', CURRENT_DATE - INTERVAL '10 days', CURRENT_DATE - INTERVAL '8 days', TRUE, 9, 3, CURRENT_TIMESTAMP),
+    ('Document user API endpoints', CURRENT_DATE - INTERVAL '8 days', CURRENT_DATE - INTERVAL '5 days', TRUE, 9, 3, CURRENT_TIMESTAMP),
+    ('Document order API endpoints', CURRENT_DATE - INTERVAL '5 days', CURRENT_DATE - INTERVAL '2 days', TRUE, 9, 3, CURRENT_TIMESTAMP),
+    ('Integrate payment provider SDK', CURRENT_DATE - INTERVAL '5 days', CURRENT_DATE - INTERVAL '2 days', TRUE, 10, 3, CURRENT_TIMESTAMP),
+    ('Implement payment workflows', CURRENT_DATE - INTERVAL '2 days', NULL, FALSE, 10, 3, CURRENT_TIMESTAMP),
+    ('Create email newsletter content', CURRENT_DATE - INTERVAL '60 days', CURRENT_DATE - INTERVAL '55 days', TRUE, 11, 2, CURRENT_TIMESTAMP),
+    ('Create social media content', CURRENT_DATE - INTERVAL '55 days', CURRENT_DATE - INTERVAL '50 days', TRUE, 11, 2, CURRENT_TIMESTAMP),
+    ('Create landing page content', CURRENT_DATE - INTERVAL '50 days', CURRENT_DATE - INTERVAL '40 days', TRUE, 11, 2, CURRENT_TIMESTAMP)
 ON CONFLICT DO NOTHING;
 
 

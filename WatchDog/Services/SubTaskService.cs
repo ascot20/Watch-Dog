@@ -51,25 +51,18 @@ public class SubTaskService : ISubtaskService
         return subtasks;
     }
 
-    public async Task<bool> UpdateSubtaskAsync(int subTaskId, string description, SubTaskStatus status)
+    public async Task<bool> UpdateSubtaskAsync(int subTaskId, bool IsCompleted)
     {
         Helper.ValidateId(subTaskId);
 
         var existingSubtask = await _subtaskRepository.GetByIdAsync(subTaskId);
+
         if (existingSubtask == null)
         {
             return false;
         }
 
-        if (!string.IsNullOrEmpty(description) && description != existingSubtask.Description)
-        {
-            existingSubtask.Description = description;
-        }
-
-        if (status != existingSubtask.Status)
-        {
-            existingSubtask.Status = status;
-        }
+        existingSubtask.IsComplete = IsCompleted;
 
         return await _subtaskRepository.UpdateAsync(existingSubtask);
     }

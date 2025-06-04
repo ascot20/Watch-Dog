@@ -1,0 +1,549 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:WatchDog.ViewModels"
+             xmlns:controls="using:WatchDog.Views.Controls"
+             mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
+             x:Class="WatchDog.Views.ProjectView"
+             x:DataType="vm:ProjectViewModel">
+    <Grid RowDefinitions="56,*" Background="{DynamicResource BackgroundDarkerBrush}">
+        <!-- Header -->
+        <controls:HeaderControl Grid.Row="0"
+                                PageTitle="{Binding Project.Title, FallbackValue='Project Details'}"
+                                NavigateToDashboardCommand="{Binding NavigateToDashboardCommand}" />
+
+        <!-- Main Content -->
+        <Grid Grid.Row="1" ColumnDefinitions="*, 300" Margin="16,0">
+            <!-- Left Side -->
+            <Grid Grid.Column="0" RowDefinitions="Auto,*" Margin="0,16,16,16">
+                <!-- Project Header with title, status and actions -->
+                <Border Grid.Row="0" Classes="Card" Padding="16" Margin="0,0,0,16">
+                    <Grid ColumnDefinitions="*, Auto">
+                        <!-- Project Title and Progress -->
+                        <StackPanel Grid.Column="0">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="{Binding Project.Title}" Classes="Heading" VerticalAlignment="Center" />
+                                <Border Background="{DynamicResource BackgroundDarkBrush}" CornerRadius="12"
+                                        Padding="8,4" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Project.Status}" FontSize="12" />
+                                </Border>
+                            </StackPanel>
+
+                            <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,12,0,0" VerticalAlignment="Center">
+                                <TextBlock Grid.Column="0" Text="Progress:" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                <ProgressBar Grid.Column="1" Value="{Binding PercentageCompleted}"
+                                             Maximum="100"
+                                             Height="8"
+                                             VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="2" Text="{Binding PercentageCompleted, StringFormat='{}{0}%'}"
+                                           HorizontalAlignment="Right"
+                                           VerticalAlignment="Center"
+                                           Margin="0,0,8,0" />
+
+
+                            </Grid>
+
+                            <!-- Description -->
+                            <TextBlock Text="{Binding Project.Description}"
+                                       TextWrapping="Wrap"
+                                       Margin="0,12,0,0"
+                                       Opacity="0.8" />
+                        </StackPanel>
+
+                        <!-- Admin controls -->
+                        <!-- Status Controls -->
+                        <StackPanel Grid.Column="1"
+                                    Orientation="Vertical"
+                                    Spacing="8"
+                                    IsVisible="{Binding IsAdmin}"
+                                    Margin="16,0,0,0"
+                                    VerticalAlignment="Top">
+
+                            <!-- Progress indicator -->
+                            <ProgressBar IsIndeterminate="True"
+                                         IsVisible="{Binding IsLoading}"
+                                         Height="2"
+                                         Margin="0,0,0,4" />
+
+                            <Grid RowDefinitions="Auto,Auto" Width="150">
+                                <!-- Update Status Button -->
+                                <Button Grid.Row="0"
+                                        Content="Update Status"
+                                        HorizontalAlignment="Stretch"
+                                        HorizontalContentAlignment="Center"
+                                        Command="{Binding ToggleUpdateStatusDropdownCommand}" />
+
+                                <!-- Status Dropdown -->
+                                <Border Grid.Row="1"
+                                        IsVisible="{Binding IsUpdateStatusDropdownOpen}"
+                                        Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+                                        BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="4"
+                                        ZIndex="100"
+                                        Margin="0,2,0,0">
+                                    <ItemsControl ItemsSource="{Binding AvailableStatuses}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Button
+                                                    Command="{Binding $parent[UserControl].((vm:ProjectViewModel)DataContext).UpdateProjectStatusCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    HorizontalAlignment="Stretch"
+                                                    HorizontalContentAlignment="Left"
+                                                    Padding="8,4"
+                                                    Background="Transparent"
+                                                    BorderThickness="0">
+                                                    <TextBlock Text="{Binding}"></TextBlock>
+                                                </Button>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </Border>
+                            </Grid>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- Tab Content -->
+                <TabControl Grid.Row="1">
+                    <!-- Timeline Tab -->
+                    <TabItem Header="Timeline">
+                        <Grid RowDefinitions="*, Auto">
+                            <!-- Timeline Messages -->
+                            <ScrollViewer Grid.Row="0">
+                                <StackPanel Spacing="16" Margin="0,16,0,0">
+                                    <!-- Pinned Messages -->
+                                    <Border Classes="Card" IsVisible="{Binding HasPinnedMessages}" Background="#FFFDF7">
+                                        <StackPanel Spacing="8">
+                                            <TextBlock Text="Pinned" FontWeight="SemiBold" />
+                                            <Separator />
+                                            <ItemsControl ItemsSource="{Binding PinnedMessages}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Grid ColumnDefinitions="Auto,*" Margin="0,4">
+                                                            <!-- <PathIcon Data="{StaticResource PinIcon}" Width="16" Height="16" Margin="0,0,8,0" />-->
+                                                            <TextBlock Grid.Column="1" Text="{Binding Content}"
+                                                                       TextWrapping="Wrap" />
+                                                        </Grid>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <!-- Timeline Messages List -->
+                                    <ItemsControl ItemsSource="{Binding TimelineMessages}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Classes="Card" Margin="0,0,0,16">
+                                                    <Grid RowDefinitions="Auto,*,Auto">
+                                                        <!-- Message Header -->
+                                                        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto"
+                                                              Margin="0,0,0,8">
+                                                            <!-- Avatar circle with initials -->
+                                                            <Border Grid.Column="0"
+                                                                    Background="{DynamicResource AccentBrush}"
+                                                                    Width="40"
+                                                                    Height="40"
+                                                                    CornerRadius="20"
+                                                                    Margin="0,0,12,0">
+                                                                <TextBlock Text="{Binding AuthorName[0]}"
+                                                                           Foreground="White"
+                                                                           HorizontalAlignment="Center"
+                                                                           VerticalAlignment="Center" />
+                                                            </Border>
+
+                                                            <!-- Author and timestamp -->
+                                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                                <TextBlock Text="{Binding AuthorName}"
+                                                                           FontWeight="SemiBold" />
+                                                                <TextBlock
+                                                                    Text="{Binding CreatedDate, StringFormat='{}{0:MMM d, yyyy HH:mm}'}"
+                                                                    Opacity="0.6" FontSize="12" />
+                                                            </StackPanel>
+
+                                                            <!-- Message type badge -->
+                                                            <Border Grid.Column="2" Background="#f1f8ff"
+                                                                    CornerRadius="12" Padding="8,4">
+                                                                <TextBlock Text="{Binding Type}" Foreground="#0366d6"
+                                                                           FontSize="12" />
+                                                            </Border>
+                                                        </Grid>
+
+                                                        <!-- Message Content -->
+                                                        <TextBlock Grid.Row="1" Text="{Binding Content}"
+                                                                   TextWrapping="Wrap" />
+
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </ScrollViewer>
+
+                            <!-- Add New Message Section -->
+                            <Border Grid.Row="1" Classes="Card" Margin="0,0,0,16">
+                                <Grid RowDefinitions="Auto,Auto,Auto">
+                                    <TextBlock Text="Add a comment" FontWeight="SemiBold" Margin="0,0,0,8" />
+                                    <TextBox Grid.Row="1" AcceptsReturn="True" TextWrapping="Wrap"
+                                             Watermark="Leave a comment..."
+                                             Text="{Binding NewMessage}"
+                                             MinHeight="80" />
+                                    <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right"
+                                                Margin="0,8,0,0">
+                                        <ComboBox ItemsSource="{Binding MessageTypes}"
+                                                  SelectedItem="{Binding SelectedMessageType}"
+                                                  Width="150" Margin="0,0,8,0" />
+                                        <Button Classes="PrimaryButton" Content="Comment"
+                                                Command="{Binding AddTimeLineMessageCommand}" />
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </TabItem>
+
+                    <!-- Tasks Tab -->
+                    <TabItem Header="Tasks">
+                        <!-- Tasks List -->
+                        <ScrollViewer>
+                            <StackPanel Spacing="16">
+                                <ItemsControl ItemsSource="{Binding ProjectTasks}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Spacing="0" Margin="0,0,0,16">
+                                                <!--Task-->
+                                                <Border Classes="Cardtwo" Margin="0,0,0,4" Padding="16">
+                                                    <StackPanel Spacing="8">
+                                                        <!-- Main task content -->
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <TextBlock Text="{Binding TaskDescription}"
+                                                                       TextWrapping="Wrap"
+                                                                       FontWeight="SemiBold" />
+
+                                                            <TextBlock Margin="4,0,0,0"
+                                                                       IsVisible="{Binding Remarks, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                                                <Run Text="  #" />
+                                                                <Run Text="{Binding Remarks}" />
+                                                            </TextBlock>
+
+
+                                                        </StackPanel>
+
+
+                                                        <Grid ColumnDefinitions="Auto,*,Auto">
+                                                            <TextBlock Grid.Column="0"
+                                                                       Text="{Binding AssignedUserName}"
+                                                                       Opacity="0.7"
+                                                                       FontSize="12"
+                                                                       VerticalAlignment="Center"
+                                                                       Margin="0,0,8,0" />
+
+                                                            <ProgressBar Grid.Column="1"
+                                                                         Value="{Binding PercentageComplete}"
+                                                                         Maximum="100"
+                                                                         Height="8"
+                                                                         VerticalAlignment="Center" />
+
+                                                            <TextBlock Grid.Column="2"
+                                                                       Text="{Binding PercentageComplete, StringFormat='{}{0}%'}"
+                                                                       Opacity="0.7"
+                                                                       FontSize="12"
+                                                                       Margin="8,0,0,0"
+                                                                       VerticalAlignment="Center" />
+                                                        </Grid>
+
+                                                        <!-- Subtasks Section - Inside main task card with connecting lines -->
+                                                        <ItemsControl ItemsSource="{Binding SubTasks}"
+                                                                      Margin="12,8,0,0"
+                                                                      IsVisible="{Binding SubTasks.Count}">
+                                                            <ItemsControl.ItemTemplate>
+                                                                <DataTemplate>
+                                                                    <Grid Margin="0,0,0,12">
+                                                                        <Grid.ColumnDefinitions>
+                                                                            <ColumnDefinition Width="16" />
+                                                                            <ColumnDefinition Width="*" />
+                                                                        </Grid.ColumnDefinitions>
+
+                                                                        <!-- Connecting line and dot -->
+                                                                        <Grid Grid.Column="0">
+                                                                            <!-- Vertical line from parent -->
+                                                                            <Border Width="2"
+                                                                                Height="16"
+                                                                                Background="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                                                                                HorizontalAlignment="Center"
+                                                                                VerticalAlignment="Top"
+                                                                                Margin="0,-8,0,0" />
+
+                                                                            <!-- Horizontal line to subtask -->
+                                                                            <Border Width="10"
+                                                                                Height="2"
+                                                                                Background="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                                                                                HorizontalAlignment="Right"
+                                                                                VerticalAlignment="Top"
+                                                                                Margin="0,8,0,0" />
+
+                                                                            <!-- Dot connection point -->
+                                                                            <Border Width="6"
+                                                                                Height="6"
+                                                                                Background="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                                                                                CornerRadius="3"
+                                                                                HorizontalAlignment="Center"
+                                                                                VerticalAlignment="Top"
+                                                                                Margin="0,5,0,0" />
+                                                                        </Grid>
+
+                                                                        <!-- Subtask Content -->
+                                                                        <Border Grid.Column="1"
+                                                                            Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+                                                                            BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                                                                            BorderThickness="1"
+                                                                            CornerRadius="4"
+                                                                            Padding="12,8">
+                                                                            <Grid ColumnDefinitions="*,Auto">
+                                                                                <!-- Subtask Description -->
+                                                                                <TextBlock Grid.Column="0"
+                                                                                    Text="{Binding Description}"
+                                                                                    TextWrapping="Wrap"
+                                                                                    VerticalAlignment="Center" />
+
+                                                                                <!-- Status on the right -->
+                                                                                <TextBlock Grid.Column="1"
+                                                                                    Text="Complete"
+                                                                                    Foreground="Green"
+                                                                                    IsVisible="{Binding IsComplete}"
+                                                                                    VerticalAlignment="Center"
+                                                                                    Margin="8,0,0,0" />
+
+                                                                                <!-- "Not Completed" text  -->
+                                                                                <TextBlock Grid.Column="1"
+                                                                                    Text="Not Completed"
+                                                                                    Foreground="Orange"
+                                                                                    IsVisible="{Binding !IsComplete}"
+                                                                                    VerticalAlignment="Center"
+                                                                                    Margin="8,0,0,0" />
+
+
+                                                                            </Grid>
+                                                                        </Border>
+                                                                    </Grid>
+                                                                </DataTemplate>
+                                                            </ItemsControl.ItemTemplate>
+                                                        </ItemsControl>
+
+                                                        <!-- No subtasks message -->
+                                                        <TextBlock Text="No subtasks available"
+                                                                   Opacity="0.7"
+                                                                   FontStyle="Italic"
+                                                                   Margin="0,8,0,0"
+                                                                   IsVisible="{Binding !SubTasks.Count}" />
+                                                    </StackPanel>
+                                                </Border>
+
+                                                <!-- Progress messages  -->
+                                                <Border Margin="20,0,0,0">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="24" />
+                                                            <ColumnDefinition Width="*" />
+                                                        </Grid.ColumnDefinitions>
+
+                                                        <!-- Vertical timeline line -->
+                                                        <Border Grid.Column="0"
+                                                                Width="2"
+                                                                Background="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                                                                HorizontalAlignment="Center"
+                                                                VerticalAlignment="Stretch"
+                                                                Margin="0,0,0,0" />
+
+                                                        <!-- Progress Messages Section -->
+                                                        <StackPanel Grid.Column="1" Spacing="8">
+                                                            <ItemsControl ItemsSource="{Binding ProgressionMessages}">
+                                                                <ItemsControl.ItemTemplate>
+                                                                    <DataTemplate>
+                                                                        <Grid Margin="0,4,0,4">
+                                                                            <Grid.ColumnDefinitions>
+                                                                                <ColumnDefinition Width="Auto" />
+                                                                                <ColumnDefinition Width="*" />
+                                                                            </Grid.ColumnDefinitions>
+
+                                                                            <!-- Circle indicator for timeline -->
+                                                                            <Grid Grid.Column="0">
+                                                                                <!-- Timeline vertical line connector -->
+                                                                                <Border
+                                                                                    Width="2"
+                                                                                    Height="24"
+                                                                                    Background="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                                                                                    HorizontalAlignment="Center"
+                                                                                    VerticalAlignment="Top"
+                                                                                    Margin="0,-12,0,0" />
+                                                                                <Border
+                                                                                    Width="12" Height="12"
+                                                                                    Background="#28a745"
+                                                                                    CornerRadius="6"
+                                                                                    Margin="0,0,12,0"
+                                                                                    VerticalAlignment="Top" />
+                                                                            </Grid>
+
+                                                                            <!-- Progress Message Card -->
+                                                                            <Border Grid.Column="1"
+                                                                                Classes="Cardtwo"
+                                                                                Padding="12">
+                                                                                <Grid RowDefinitions="Auto,Auto">
+                                                                                    <StackPanel Grid.Row="0"
+                                                                                        Orientation="Horizontal"
+                                                                                        Spacing="8">
+                                                                                        <TextBlock
+                                                                                            Text="Progress Update"
+                                                                                            FontWeight="SemiBold" />
+                                                                                        <TextBlock
+                                                                                            Text="{Binding CreatedDate, StringFormat='{}{0:MM/dd HH:mm}'}"
+                                                                                            Opacity="0.7"
+                                                                                            FontSize="12" />
+                                                                                    </StackPanel>
+
+                                                                                    <TextBlock Grid.Row="1"
+                                                                                        Text="{Binding Content}"
+                                                                                        TextWrapping="Wrap"
+                                                                                        Margin="0,4,0,0" />
+                                                                                </Grid>
+                                                                            </Border>
+                                                                            <!-- Timeline vertical line connector below -->
+                                                                            <Border Grid.Column="0"
+                                                                                Width="2"
+                                                                                Height="12"
+                                                                                Background="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                                                                                HorizontalAlignment="Center"
+                                                                                VerticalAlignment="Bottom"
+                                                                                Margin="0,0,12,-12" />
+                                                                        </Grid>
+                                                                    </DataTemplate>
+                                                                </ItemsControl.ItemTemplate>
+                                                            </ItemsControl>
+
+                                                            <!-- No progress messages -->
+                                                            <Grid IsVisible="{Binding !ProgressionMessages.Count}">
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="Auto" />
+                                                                    <ColumnDefinition Width="*" />
+                                                                </Grid.ColumnDefinitions>
+
+                                                                <!-- Circle indicator with vertical line -->
+                                                                <Grid Grid.Column="0">
+                                                                    <!-- Timeline vertical line connector -->
+                                                                    <Border
+                                                                        Width="2"
+                                                                        Height="24"
+                                                                        Background="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                                                                        HorizontalAlignment="Center"
+                                                                        VerticalAlignment="Top"
+                                                                        Margin="0,-12,0,0" />
+                                                                    <Border
+                                                                        Width="12" Height="12"
+                                                                        Background="{DynamicResource SystemControlBackgroundBaseMediumLowBrush}"
+                                                                        CornerRadius="6"
+                                                                        Margin="0,0,12,0"
+                                                                        VerticalAlignment="Top" />
+                                                                </Grid>
+
+                                                                <!-- Message -->
+                                                                <TextBlock Grid.Column="1"
+                                                                           Text="No progress updates available"
+                                                                           Opacity="0.7"
+                                                                           FontStyle="Italic" />
+                                                            </Grid>
+                                                        </StackPanel>
+                                                    </Grid>
+                                                </Border>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </TabItem>
+                </TabControl>
+            </Grid>
+
+            <!-- Right Sidebar -->
+            <StackPanel Grid.Column="1" Margin="0,16,0,16" Spacing="16">
+                <!-- Project Details -->
+                <Border Classes="Cardtwo">
+                    <StackPanel Margin="16">
+                        <TextBlock Text="Project Details" Classes="Headingthree" Margin="0,0,0,12" />
+
+                        <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="Auto,*" RowSpacing="8">
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Created:" Opacity="0.8" />
+                            <TextBlock Grid.Row="0" Grid.Column="1"
+                                       Text="{Binding Project.CreatedDate, StringFormat='{}{0:d}'}"
+                                       HorizontalAlignment="Right" />
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Started:" Opacity="0.8" />
+                            <TextBlock Grid.Row="1" Grid.Column="1"
+                                       Text="{Binding Project.StartDate, StringFormat='{}{0:d}'}"
+                                       HorizontalAlignment="Right" />
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="End Date:" Opacity="0.8" />
+                            <TextBlock Grid.Row="2" Grid.Column="1"
+                                       Text="{Binding Project.EndDate, StringFormat='{}{0:d}'}"
+                                       HorizontalAlignment="Right" />
+
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Status:" Opacity="0.8" />
+                            <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding Project.Status}"
+                                       HorizontalAlignment="Right" />
+
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Tasks:" Opacity="0.8" />
+                            <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding ProjectTasks.Count}"
+                                       HorizontalAlignment="Right" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Team Members -->
+                <Border Classes="Cardtwo">
+                    <StackPanel Margin="16">
+                        <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,12">
+                            <TextBlock Grid.Column="0" Text="Team Members" Classes="Headingthree" />
+                        </Grid>
+
+                        <ItemsControl ItemsSource="{Binding TeamMembers}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,0,0,12">
+                                        <!-- Avatar circle with initials -->
+                                        <Border Grid.Column="0"
+                                                Background="{DynamicResource AccentBrush}"
+                                                Width="32"
+                                                Height="32"
+                                                CornerRadius="16"
+                                                Margin="0,0,12,0">
+                                            <TextBlock Text="{Binding Username[0]}"
+                                                       Foreground="White"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
+                                                       FontSize="14" />
+                                        </Border>
+
+                                        <!-- Username -->
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Username}" />
+                                            <TextBlock Text="{Binding Role}" Opacity="0.6" FontSize="12" />
+                                        </StackPanel>
+
+                                        <!-- Remove Button (for admins) -->
+                                        <Button Grid.Column="2" Content="✕"
+                                                Command="{Binding $parent[UserControl].((vm:ProjectViewModel)DataContext).RemoveTeamMemberCommand}"
+                                                CommandParameter="{Binding}"
+                                                IsVisible="{Binding $parent[UserControl].((vm:ProjectViewModel)DataContext).IsAdmin}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Grid>
+    </Grid>
+
+</UserControl>

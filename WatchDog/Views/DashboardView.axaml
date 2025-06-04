@@ -11,7 +11,8 @@
 
     <Grid RowDefinitions="56,*" Background="{DynamicResource BackgroundDarkerBrush}">
         <!-- Header -->
-        <controls:HeaderControl Grid.Row="0" PageTitle="Dashboard" NavigateToDashboardCommand="{Binding NavigateToDashboardCommand}"/>
+        <controls:HeaderControl Grid.Row="0" PageTitle="Dashboard"
+                                NavigateToDashboardCommand="{Binding NavigateToDashboardCommand}" />
         <!-- Main Content -->
         <Grid Grid.Row="1" ColumnDefinitions="270, *, 300">
             <!-- Left Sidebar -->
@@ -37,14 +38,16 @@
                         <ItemsControl ItemsSource="{Binding MyProjects}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Button Command="{Binding $parent[UserControl].((vm:DashboardViewModel)DataContext).NavigateToProjectCommand}" CommandParameter="{Binding}">
+                                    <Button
+                                        Command="{Binding $parent[UserControl].((vm:DashboardViewModel)DataContext).NavigateToProjectCommand}"
+                                        CommandParameter="{Binding}">
                                         <Grid Margin="0,4" ColumnDefinitions="16, *">
                                             <TextBlock Grid.Column="0" Text="📁" VerticalAlignment="Center" />
                                             <TextBlock Grid.Column="1" Text="{Binding Title}" Margin="8,0,0,0"
                                                        VerticalAlignment="Center" />
-                                        </Grid> 
+                                        </Grid>
                                     </Button>
-                                    
+
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
@@ -87,7 +90,7 @@
                                             <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
                                                 <TextBlock Text="{Binding Id}" FontSize="12"
                                                            Padding="4" Background="#e1e4e8" />
-                                                <TextBlock Text="{Binding CreatedDate}" Classes="secondary"
+                                                <TextBlock Text="{Binding CreatedDate}" 
                                                            FontSize="12" Margin="8,0,0,0" VerticalAlignment="Center" />
                                             </StackPanel>
                                         </StackPanel>
@@ -105,32 +108,174 @@
             </ScrollViewer>
 
             <!-- Right Sidebar -->
-            <ScrollViewer Grid.Column="2" Margin="4,16,16,16">
-                <Grid RowDefinitions="Auto, Auto">
-                    <Border Classes="Cardtwo">
+                <StackPanel Grid.Column="2" Margin="4 16,16,16">
+                    <!-- Admin User Management Section -->
+                    <Border Classes="Cardtwo" IsVisible="{Binding IsAdmin}">
                         <StackPanel>
-                            <!-- Your Task -->
+                            <Grid ColumnDefinitions="*, Auto" Margin="12,12,12,8">
+                                <TextBlock Text="User Management" Classes="Headingthree" HorizontalAlignment="Left" />
+                                <Button Grid.Column="1"
+                                        Classes="PrimaryButton"
+                                        Command="{Binding NavigateToRegisterCommand}">
+                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                        
+                                        <TextBlock Text="Add User" VerticalAlignment="Center" FontSize="12" />
+                                    </StackPanel>
+                                </Button>
+                            </Grid>
+
+                            <TextBlock Text="All Users" Margin="12,8,0,8" FontWeight="Medium" />
+
+                            <!-- Loading indicator -->
+                            <ProgressBar IsIndeterminate="True"
+                                         IsVisible="{Binding IsLoadingUsers}"
+                                         Margin="12,8" />
+
+                            <!-- User search -->
+                            <Grid ColumnDefinitions="*,Auto" Margin="12,0,12,8">
+                                <TextBox Grid.Column="0"
+                                         Text="{Binding SearchTerm}"
+                                         Watermark="Search users..."
+                                         Margin="0,0,8,0" />
+                                <Button Grid.Column="1"
+                                        Command="{Binding SearchAllUsersCommand}">
+                                    <PathIcon Data="{StaticResource SearchIcon}" Width="16" Height="16"/>
+                                </Button>
+                            </Grid>
+
+                            <!-- Users list -->
+                            <Border Classes="Card"
+                                    Background="{DynamicResource BackgroundDarkerBrush}"
+                                    MaxHeight="300"
+                                    Margin="12,0,12,12">
+                                <ScrollViewer>
+                                    <ItemsControl ItemsSource="{Binding FilteredUsers}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Padding="8"
+                                                        Margin="0,2"
+                                                        CornerRadius="4"
+                                                        Background="{DynamicResource ContainerBrush}">
+                                                    <Grid ColumnDefinitions="Auto, *, Auto">
+                                                        <Border Grid.Column="0"
+                                                                Width="32" Height="32"
+                                                                CornerRadius="16"
+                                                                Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+                                                                Margin="0,0,12,0">
+                                                            <TextBlock
+                                                                Text="{Binding Username[0]}"
+                                                                HorizontalAlignment="Center"
+                                                                VerticalAlignment="Center" />
+                                                        </Border>
+                                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                            <TextBlock Text="{Binding Username}" FontWeight="Medium" />
+                                                            <TextBlock Text="{Binding Email}" FontSize="12"
+                                                                       Opacity="0.7" />
+                                                        </StackPanel>
+                                                        <StackPanel Grid.Column="2" Orientation="Horizontal"
+                                                                    Spacing="8">
+                                                            
+                                                            
+                                                        </StackPanel>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </ScrollViewer>
+                            </Border>
+
+                            <!-- User statistics -->
+                            <Grid ColumnDefinitions="*,*" Margin="12,0,12,12">
+                                <Border Grid.Column="0"
+                                        Classes="Card"
+                                        Background="{DynamicResource ContainerBrush}"
+                                        Margin="0,0,4,0"
+                                        Padding="12">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding AllUsers.Count}"
+                                                   FontSize="24"
+                                                   FontWeight="Bold"
+                                                   HorizontalAlignment="Center" />
+                                        <TextBlock Text="Total Users"
+                                                   FontSize="12"
+                                                   Opacity="0.7"
+                                                   HorizontalAlignment="Center" />
+                                    </StackPanel>
+                                </Border>
+                                <Border Grid.Column="1"
+                                        Classes="Card"
+                                        Background="{DynamicResource ContainerBrush}"
+                                        Margin="4,0,0,0"
+                                        Padding="12">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding FeedProjects.Count}"
+                                                   FontSize="24"
+                                                   FontWeight="Bold"
+                                                   HorizontalAlignment="Center" />
+                                        <TextBlock Text="Total Projects"
+                                                   FontSize="12"
+                                                   Opacity="0.7"
+                                                   HorizontalAlignment="Center" />
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Regular User Tasks Section -->
+                    <Border Classes="Cardtwo" IsVisible="{Binding !IsAdmin}">
+                        <StackPanel>
                             <TextBlock Text="Your Tasks" Classes="Headingthree" Margin="12,12,0,12" />
                             <ItemsControl ItemsSource="{Binding MyTasks}" Margin="12, 0, 12, 12">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Grid Margin="0,0,0,12" ColumnDefinitions="*, Auto">
-                                            <TextBlock Text="{Binding TaskDescription }" TextWrapping="Wrap"
-                                                       HorizontalAlignment="Left"
-                                                       VerticalAlignment="Center" />
+                                        <Button
+                                            Command="{Binding $parent[UserControl].((vm:DashboardViewModel)DataContext).NavigateToTaskCommand}"
+                                            CommandParameter="{Binding}"
+                                            HorizontalAlignment="Stretch"
+                                            HorizontalContentAlignment="Stretch"
+                                            Background="Transparent"
+                                            BorderThickness="0"
+                                            Padding="0"
+                                            Margin="0,0,0,4">
+                                            <Grid Margin="0,0,0,12" ColumnDefinitions="*, Auto">
+                                                <StackPanel Grid.Column="0" Spacing="4">
+                                                    <TextBlock Text="{Binding TaskDescription}" TextWrapping="Wrap"
+                                                               HorizontalAlignment="Left"
+                                                               VerticalAlignment="Center" />
+                                                    <TextBlock Text="{Binding ProjectId, StringFormat='Project #{0}'}"
+                                                               Opacity="0.6"
+                                                               FontSize="12" />
+                                                </StackPanel>
 
-                                            <TextBlock Grid.Column="1"
-                                                       Text="{Binding PercentageComplete, StringFormat='{}{0}%'}"
-                                                       HorizontalAlignment="Right"
-                                                       VerticalAlignment="Center" />
-                                        </Grid>
+                                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8"
+                                                            VerticalAlignment="Center">
+                                                    <Border
+                                                        Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+                                                        CornerRadius="12"
+                                                        Padding="8,4">
+                                                        <TextBlock
+                                                            Text="{Binding PercentageComplete, StringFormat='{}{0}%'}"
+                                                            FontSize="12" />
+                                                    </Border>
+                                                    <!-- Arrow icon -->
+                                                    <PathIcon
+                                                        Data="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z"
+                                                        Width="16"
+                                                        Height="16"
+                                                        Opacity="0.6" />
+                                                </StackPanel>
+                                            </Grid>
+                                        </Button>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
                         </StackPanel>
                     </Border>
-                </Grid>
-            </ScrollViewer>
+                </StackPanel>
+
+            
         </Grid>
     </Grid>
 

@@ -32,7 +32,7 @@ public static class Navigator
     {
         var viewModel = CreateViewModel<T>();
             
-        // Initialize viewModel with parameter if it supports it
+        // Initialize viewModel with parameter
         if (viewModel is IInitializable initializable && parameter != null)
         {
             _ = initializable.InitializeAsync(parameter);

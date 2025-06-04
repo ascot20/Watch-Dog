@@ -14,28 +14,29 @@ public class SubTaskRepository : Repository<SubTask>, ISubTaskRepository
     {
     }
 
-    public override async Task<int> CreateAsync(SubTask progressionMessage)
+    public override async Task<int> CreateAsync(SubTask subTask)
     {
         try
         {
-            await base.CreateAsync(progressionMessage);
+            await base.CreateAsync(subTask);
 
             using var connection = this._dbConnectionFactory.CreateConnection();
 
             var query = @"
-                INSERT INTO SubTasks (Description, StartDate, Status, TaskId, CreatedById)
+                INSERT INTO SubTasks (Description, TaskId, CreatedById)
                 VALUES (@Description, @TaskId, @CreatedById)
                 RETURNING Id;";
 
             return await connection.QuerySingleAsync<int>(query, new
             {
-                progressionMessage.Description,
-                progressionMessage.TaskId,
-                progressionMessage.CreatedById,
+                subTask.Description,
+                subTask.TaskId,
+                subTask.CreatedById,
             });
         }
         catch (Exception e)
         {
+            Console.WriteLine(e.Message);
             throw new Exception($"Database error in {nameof(CreateAsync)}: {e.Message}");
         }
     }
@@ -80,18 +81,16 @@ public class SubTaskRepository : Repository<SubTask>, ISubTaskRepository
 
             var query = @"
                 UPDATE SubTasks
-                SET Description = @Description,
-                    Status = @Status,
+                SET IsComplete = @IsComplete,
                     CompletedDate = CASE 
-                                        WHEN @Status='Completed' THEN CURRENT_TIMESTAMP
+                                        WHEN @IsComplete=TRUE THEN CURRENT_TIMESTAMP
                                         ELSE completeddate
                                     END   
                 WHERE Id = @Id";
 
             int rowsAffected = await connection.ExecuteAsync(query, new
             {
-                subTask.Description,
-                subTask.Status,
+                subTask.IsComplete,
                 subTask.Id
             });
 

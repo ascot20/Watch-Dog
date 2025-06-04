@@ -16,6 +16,7 @@ namespace WatchDog;
 public partial class App : Application
 {
     public static IServiceProvider ServiceProvider { get; private set; }
+    
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
@@ -79,5 +80,7 @@ public partial class App : Application
         services.AddTransient<DashboardViewModel>();
         services.AddTransient<NewProjectViewModel>();
         services.AddTransient<ProjectViewModel>();
+        services.AddTransient<TaskViewModel>();
+        services.AddTransient<RegisterUserViewModel>();
     }
 }

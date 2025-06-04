@@ -5,7 +5,7 @@ using Task = System.Threading.Tasks.Task;
 
 namespace WatchDog.Data.Repositories;
 
-public interface IRepository<T> where T:BaseEntity
+public interface IRepository<T> where T:BaseModel
 {
     Task<T?> GetByIdAsync(int id);
     Task<IEnumerable<T>> GetAllAsync();

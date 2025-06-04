@@ -1,5 +1,3 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -12,9 +10,7 @@ public interface ITaskService
 
     Task<bool> UpdateTaskAsync(
         int taskId,
-        string? description = null,
         string? remarks = null,
-        DateTime? startDate = null,
         int? percentageCompleted = null,
         int? assignedUserId = null);
 

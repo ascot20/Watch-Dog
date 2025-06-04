@@ -40,6 +40,13 @@ public partial class LoginViewModel : ViewModelBase
             return;
         }
 
+        if (!IsValidEmail(Email))
+        {
+            ErrorMessage = "Incorrect email format.";
+            IsLoading = false;
+            return;
+        }
+
         try
         {
             var user = await _userService.AuthenticateAsync(Email, Password);
@@ -76,5 +83,18 @@ public partial class LoginViewModel : ViewModelBase
     partial void OnIsLoadingChanged(bool value)
     {
         ButtonText = value ? "Signing In..." : "Sign In";
+    }
+    
+    private bool IsValidEmail(string email)
+    {
+        try
+        {
+            var addr = new System.Net.Mail.MailAddress(email);
+            return addr.Address == email;
+        }
+        catch (Exception e)
+        {
+            return false;
+        }
     }
 }
