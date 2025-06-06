@@ -11,7 +11,8 @@
     <Grid RowDefinitions="56,*" Background="{DynamicResource BackgroundDarkerBrush}">
         <!-- Header -->
         <controls:HeaderControl Grid.Row="0" PageTitle="Register User"
-                                NavigateToDashboardCommand="{Binding NavigateToDashboardCommand}" />
+                                NavigateToDashboardCommand="{Binding NavigateToDashboardCommand}" 
+                                LogOutCommand="{Binding LogoutCommand}"/>
         <!-- Main Content -->
         <Grid Grid.Row="1" Background="{DynamicResource BackgroundDarkBrush}">
             <StackPanel HorizontalAlignment="Center"
@@ -30,6 +31,14 @@
                            HorizontalAlignment="Center"
                            Margin="0,0,0,16" />
 
+                <!-- Error Card -->
+                <Border Classes="CardError"
+                        IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                    <!-- Error message-->
+                    <TextBlock Text="{Binding ErrorMessage}"
+                               Classes="ErrorLabel" />
+                </Border>
+
                 <!-- Registration form box -->
                 <Border Background="{DynamicResource ContainerDarkBrush}"
                         BorderBrush="{DynamicResource BorderBrush}"
@@ -37,12 +46,6 @@
                         CornerRadius="6"
                         Padding="20">
                     <StackPanel>
-
-                        <!-- Error message-->
-                        <TextBlock Text="{Binding ErrorMessage}"
-                                   Classes="ErrorMessage"
-                                   IsVisible="{Binding !!ErrorMessage}"
-                                   Margin="0,0,0,16" />
 
                         <!-- Username input -->
                         <TextBlock Text="Username"

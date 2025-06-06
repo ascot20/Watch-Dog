@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -16,32 +15,25 @@ public partial class ProjectViewModel : ViewModelBase, IInitializable
     private readonly ITimeLineMessageService _timeLineMessageService;
     private int _projectId;
 
-    [ObservableProperty] private Project _project;
+    [ObservableProperty] private Project? _project;
     [ObservableProperty] private int _percentageCompleted;
     [ObservableProperty] private ObservableCollection<User> _teamMembers = new();
-    [ObservableProperty] private ObservableCollection<Models.Task> _projectTasks = new();
+    [ObservableProperty] private ObservableCollection<Task> _projectTasks = new();
     [ObservableProperty] private ObservableCollection<TimeLineMessage> _timelineMessages = new();
     [ObservableProperty] private ObservableCollection<MessageType> _messageTypes;
     [ObservableProperty] private MessageType _selectedMessageType = MessageType.Question;
     [ObservableProperty] private string _newMessage = string.Empty;
-    [ObservableProperty] private bool _isUpdateStatusDropdownOpen = false;
-    [ObservableProperty] private ProjectStatus _selectedStatus;
 
-    [ObservableProperty] private ObservableCollection<ProjectStatus> _availableStatuses;
     [ObservableProperty] private bool _isLoading;
-    [ObservableProperty] private string _errorMessage;
+    [ObservableProperty] private string? _errorMessage;
     [ObservableProperty] private bool _isAdmin;
-
-    public IEnumerable<TimeLineMessage> PinnedMessages =>
-        TimelineMessages.Where(m => m.IsPinned).ToList();
-
-    public bool HasPinnedMessages => PinnedMessages.Any();
+    [ObservableProperty] private bool _showCloseProjectButton;
 
     public ProjectViewModel(
         IProjectService projectService,
         IAuthorizationService authorizationService,
         ITimeLineMessageService timeLineMessageService
-    )
+    ):base(authorizationService)
     {
         _projectService = projectService;
         _authorizationService = authorizationService;
@@ -49,9 +41,6 @@ public partial class ProjectViewModel : ViewModelBase, IInitializable
 
         _messageTypes = new ObservableCollection<MessageType>(
             Enum.GetValues(typeof(MessageType)).Cast<MessageType>());
-
-        _availableStatuses = new ObservableCollection<ProjectStatus>(
-            Enum.GetValues(typeof(ProjectStatus)).Cast<ProjectStatus>());
 
         IsAdmin = _authorizationService.IsAdmin();
     }
@@ -80,16 +69,16 @@ public partial class ProjectViewModel : ViewModelBase, IInitializable
             }
 
             TeamMembers = new ObservableCollection<User>(Project.ProjectMembers);
-            ProjectTasks = new ObservableCollection<Models.Task>(Project.Tasks);
+            ProjectTasks = new ObservableCollection<Task>(Project.Tasks);
             TimelineMessages = new ObservableCollection<TimeLineMessage>(Project.TimeLineMessages);
 
-            SelectedStatus = Project.Status;
-
             CalculateProjectCompletion();
+            
+            UpdateCloseButtonVisibility();
         }
-        catch (Exception e)
+        catch (Exception)
         {
-            ErrorMessage = e.Message;
+            ErrorMessage = "Failed to load project";
         }
         finally
         {
@@ -106,13 +95,45 @@ public partial class ProjectViewModel : ViewModelBase, IInitializable
         }
 
         int totalPercentage = ProjectTasks.Sum(t => t.PercentageComplete);
-        PercentageCompleted = totalPercentage / ProjectTasks.Count;
+        int newPercentageCompleted = totalPercentage / ProjectTasks.Count;
+        
+        bool isPercentageChanged = PercentageCompleted != newPercentageCompleted;
+        PercentageCompleted = newPercentageCompleted;
+
+        if (isPercentageChanged)
+        {
+            ProjectStatus newStatus;
+            
+            if (PercentageCompleted == 100)
+            {
+                newStatus = ProjectStatus.Completed;
+            }
+            else if (PercentageCompleted > 0)
+            {
+                newStatus = ProjectStatus.InProgress;
+            }
+            else
+            {
+                newStatus = ProjectStatus.NotStarted;
+            }
+            
+            if (newStatus != Project!.Status)
+            {
+                _ = UpdateProjectStatusAsync(newStatus);
+            }
+        }
     }
 
-    [RelayCommand]
-    private void ToggleUpdateStatusDropdown()
+    private void UpdateCloseButtonVisibility()
     {
-        IsUpdateStatusDropdownOpen = !IsUpdateStatusDropdownOpen;
+        if (Project != null && IsAdmin)
+        {
+            ShowCloseProjectButton = Project.Status == ProjectStatus.Completed;
+        }
+        else
+        {
+            ShowCloseProjectButton = false;
+        }
     }
 
     [RelayCommand]
@@ -131,7 +152,7 @@ public partial class ProjectViewModel : ViewModelBase, IInitializable
 
             int result = await _timeLineMessageService.CreateMessageAsync(
                 message: NewMessage,
-                projectId: Project.Id,
+                projectId: Project!.Id,
                 creatorId: _authorizationService.GetCurrentUserId(),
                 type: SelectedMessageType);
 
@@ -155,23 +176,36 @@ public partial class ProjectViewModel : ViewModelBase, IInitializable
     }
 
     [RelayCommand]
-    private async System.Threading.Tasks.Task PinMessageAsync()
+    private async System.Threading.Tasks.Task CloseProjectAsync()
     {
-    }
+        if (Project == null) return;
 
-    [RelayCommand]
-    private async System.Threading.Tasks.Task UnpinMessageAsync()
-    {
-    }
+        try
+        {
+            IsLoading = true;
+            ErrorMessage = string.Empty;
 
-    [RelayCommand]
-    private async System.Threading.Tasks.Task DeleteMessageAsync()
-    {
+            bool success = await _projectService.UpdateProjectAsync(_projectId, ProjectStatus.Closed);
+
+            if (!success)
+            {
+                ErrorMessage = "Failed to close project";
+            }
+            else
+            {
+                await LoadProjectAsync();
+            }
+        }
+        catch (Exception)
+        {
+            ErrorMessage = "Failed to close project";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
     
-    [RelayCommand]
-    private async System.Threading.Tasks.Task RemoveTeamMemberAsync(){}
-
     [RelayCommand]
     private async System.Threading.Tasks.Task UpdateProjectStatusAsync(ProjectStatus status)
     {
@@ -183,9 +217,6 @@ public partial class ProjectViewModel : ViewModelBase, IInitializable
             ErrorMessage = string.Empty;
 
             Project.Status = status;
-            SelectedStatus = status;
-
-            IsUpdateStatusDropdownOpen = false;
 
             bool suceess = await _projectService.UpdateProjectAsync(_projectId, status);
 

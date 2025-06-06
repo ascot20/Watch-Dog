@@ -4,7 +4,6 @@ using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Microsoft.Extensions.DependencyInjection;
 using WatchDog.ViewModels;
-using WatchDog.Views;
 
 namespace WatchDog;
 
@@ -28,7 +27,7 @@ public static class Navigator
 
     }
     
-    public static void NavigateWithParameter<T>(object parameter) where T : ViewModelBase
+    public static void NavigateWithParameter<T>(object? parameter) where T : ViewModelBase
     {
         var viewModel = CreateViewModel<T>();
             

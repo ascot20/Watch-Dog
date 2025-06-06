@@ -7,26 +7,29 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="WatchDog.Views.TaskView"
              x:DataType="vm:TaskViewModel">
-    <Grid RowDefinitions="56,*" Background="{DynamicResource BackgroundDarkerBrush}">
+    <Grid RowDefinitions="56,Auto,*" Background="{DynamicResource BackgroundDarkerBrush}">
         <!-- Header -->
         <controls:HeaderControl Grid.Row="0"
                                 PageTitle="{Binding Task.TaskDescription, FallbackValue='Task Details'}"
-                                NavigateToDashboardCommand="{Binding NavigateToDashboardCommand}" />
+                                NavigateToDashboardCommand="{Binding NavigateToDashboardCommand}" 
+                                LogOutCommand="{Binding LogoutCommand}"/>
 
+        <Border Grid.Row="1" Classes="CardError"
+                IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+            <!-- Error message-->
+            <TextBlock Text="{Binding ErrorMessage}"
+                       Classes="ErrorLabel" />
+        </Border> 
+        
         <!-- Main Content -->
-        <Grid Grid.Row="1" Margin="16">
+        <Grid Grid.Row="2" Margin="16">
             <!-- Loading indicator -->
             <ProgressBar IsIndeterminate="True"
                          IsVisible="{Binding IsLoading}"
                          VerticalAlignment="Top" />
 
-            <!-- Error message -->
-            <TextBlock Text="{Binding ErrorMessage}"
-                       IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                       Foreground="Red"
-                       VerticalAlignment="Top"
-                       HorizontalAlignment="Center"
-                       Margin="0,20,0,0" />
+            <!-- Error Card -->
+            
 
             <ScrollViewer IsVisible="{Binding !IsLoading}">
                 <StackPanel Spacing="20">

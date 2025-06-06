@@ -21,13 +21,31 @@
 
 
             <!-- User section -->
-            <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="16,0">
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="16,0" Spacing="8">
                 <!-- Search Box -->
-                <Button Command="{Binding NavigateToDashboardCommand, RelativeSource={RelativeSource AncestorType=local:HeaderControl}}">
-                    <PathIcon Data="{StaticResource DashboardIcon}" Height="16" Width="16" BorderThickness="0.5"></PathIcon>
+                <Button
+                    Command="{Binding NavigateToDashboardCommand, RelativeSource={RelativeSource AncestorType=local:HeaderControl}}"
+                    Classes="SecondaryButton">
+                    <PathIcon Data="{StaticResource DashboardIcon}" Height="16" Width="16" BorderThickness="0.5"
+                              Foreground="{DynamicResource IconBrush}">
+                    </PathIcon>
                 </Button>
-                <Button Content="🔔" />
-                <Button Content="👤" />
+                
+                <Button
+                    Command="{Binding LogOutCommand, RelativeSource={RelativeSource AncestorType=local:HeaderControl}}"
+                    Classes="SecondaryButton">
+                    <PathIcon Data="{StaticResource SignOutIcon}" Height="16" Width="16" BorderThickness="0.5"
+                              Foreground="{DynamicResource IconBrush}">
+                    </PathIcon>
+                </Button>
+                
+                <Button Classes="Profile">
+                    <Button.Background>
+                        <ImageBrush Source="/Assets/profileIcon.png"
+                                    Stretch="UniformToFill" />
+                    </Button.Background>
+
+                </Button>
             </StackPanel>
         </Grid>
     </Border>

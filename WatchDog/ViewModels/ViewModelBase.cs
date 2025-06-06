@@ -1,14 +1,26 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using System;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using WatchDog.Services;
-using System.Threading.Tasks;
 using WatchDog.Models;
+using WatchDog.Services;
 using Task = WatchDog.Models.Task;
 
 namespace WatchDog.ViewModels;
 
 public partial class ViewModelBase : ObservableObject
 {
+    protected readonly IAuthorizationService? AuthorizationService;
+
+    public ViewModelBase(IAuthorizationService authorizationservice)
+    {
+        AuthorizationService = authorizationservice;
+    }
+
+    public ViewModelBase()
+    {
+        
+    }
+    
     [RelayCommand]
     protected void NavigateToDashboard()
     {
@@ -28,7 +40,7 @@ public partial class ViewModelBase : ObservableObject
     }
 
     [RelayCommand]
-    protected void NavigateToProject(Project project)
+    protected void NavigateToProject(Project? project)
     {
         if (project != null)
         {
@@ -37,7 +49,7 @@ public partial class ViewModelBase : ObservableObject
     }
 
     [RelayCommand]
-    protected void NavigateToTask(Task task)
+    protected void NavigateToTask(Task? task)
     {
         if (task != null)
         {
@@ -49,6 +61,27 @@ public partial class ViewModelBase : ObservableObject
     protected void NavigateToRegister()
     {
         Navigator.Navigate<RegisterUserViewModel>();
+    }
+
+    [RelayCommand]
+    protected async System.Threading.Tasks.Task LogoutAsync()
+    {
+        try
+        {
+            if (AuthorizationService == null)
+            {
+                NavigateToLogin();
+                return;
+            }
+
+            await AuthorizationService.LogoutAsync();
+            NavigateToLogin();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Error logging out: {e.Message}");
+            NavigateToLogin();
+        }
     }
 
     

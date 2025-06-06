@@ -20,21 +20,24 @@ public partial class DashboardViewModel : ViewModelBase
     [ObservableProperty] private ObservableCollection<User> _allUsers = new();
     [ObservableProperty] private ObservableCollection<User> _filteredUsers = new();
 
-    [ObservableProperty] private bool _isLoading = false;
-    [ObservableProperty] private bool _isLoadingUsers = false;
-    [ObservableProperty] private bool _isAdmin = false;
+    [ObservableProperty] private string _currentUsername;
+    [ObservableProperty] private bool _isLoading;
+    [ObservableProperty] private bool _isLoadingUsers;
+    [ObservableProperty] private bool _isAdmin;
     [ObservableProperty] private string _searchTerm = string.Empty;
     [ObservableProperty] private string _errorMessage = string.Empty;
-    [ObservableProperty] private User _selectedUser;
+    [ObservableProperty] private User? _selectedUser;
 
     public DashboardViewModel(IProjectService projectService,
         IUserService userService,
-        IAuthorizationService authorizationService)
+        IAuthorizationService authorizationService):base(authorizationService)
     {
         _projectService = projectService;
         _userService = userService;
         _authorizationService = authorizationService;
+        
         IsAdmin = _authorizationService.IsAdmin();
+        CurrentUsername = _authorizationService.GetCurrentUserName().ToUpper();
 
         LoadProjects();
         LoadTasks();
@@ -59,16 +62,16 @@ public partial class DashboardViewModel : ViewModelBase
                 FeedProjects.Add(project);
             }
 
-            foreach (var project in currentUser.UserProjects)
+            foreach (var project in currentUser!.UserProjects)
             {
                 MyProjects.Add(project);
             }
 
             IsLoading = false;
         }
-        catch (Exception e)
+        catch (Exception)
         {
-            Console.WriteLine(e);
+            ErrorMessage = "Failed to load projects";
         }
     }
 
@@ -81,15 +84,14 @@ public partial class DashboardViewModel : ViewModelBase
 
             MyTasks.Clear();
 
-            foreach (var task in currentUser.AssignedTasks)
+            foreach (var task in currentUser!.AssignedTasks)
             {
                 MyTasks.Add(task);
             }
         }
-        catch (Exception e)
+        catch (Exception)
         {
-            Console.WriteLine(e);
-            throw;
+            ErrorMessage = "Failed to load tasks";
         }
     }
 
@@ -107,7 +109,7 @@ public partial class DashboardViewModel : ViewModelBase
 
                 FilterUsers();
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 ErrorMessage = "Failed to load users";
             }

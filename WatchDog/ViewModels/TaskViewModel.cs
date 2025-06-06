@@ -33,7 +33,7 @@ public partial class TaskViewModel : ViewModelBase, IInitializable
         ISubtaskService subtaskService,
         IProgressionMessageService progressionMessageService,
         IAuthorizationService authorizationService
-    )
+    ):base(authorizationService)
     {
         _taskService = taskService;
         _subtaskService = subtaskService;

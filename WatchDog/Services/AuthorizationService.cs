@@ -1,5 +1,4 @@
 using System;
-using System.Threading.Tasks;
 using WatchDog.Models;
 
 namespace WatchDog.Services;
@@ -16,13 +15,13 @@ public class AuthorizationService : IAuthorizationService
     public bool IsAdmin()
     {
         var currentUser = _sessionService.GetCurrentUser();
-        return currentUser?.Role == UserRole.SuperAdmin;
+        return currentUser.Role == UserRole.SuperAdmin;
     }
 
     public string GetCurrentUserName()
     {
         var currentUser = _sessionService.GetCurrentUser();
-        return currentUser?.Username ?? throw new UnauthorizedAccessException("No user is currently authenticated");
+        return currentUser.Username ?? throw new UnauthorizedAccessException("No user is currently authenticated");
     }
     
     
@@ -30,5 +29,10 @@ public class AuthorizationService : IAuthorizationService
     {
         var currentUser = _sessionService.GetCurrentUser();
         return currentUser?.Id ?? throw new UnauthorizedAccessException("No user is currently authenticated");
+    }
+    
+    public async System.Threading.Tasks.Task LogoutAsync()
+    {
+        await _sessionService.ClearSessionAsync();
     }
 }

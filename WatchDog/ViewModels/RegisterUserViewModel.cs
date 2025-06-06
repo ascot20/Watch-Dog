@@ -7,27 +7,27 @@ using Task = System.Threading.Tasks.Task;
 
 namespace WatchDog.ViewModels;
 
-public partial class RegisterUserViewModel:ViewModelBase
+public partial class RegisterUserViewModel : ViewModelBase
 {
-   private readonly IUserService _userService;
-   private readonly IAuthorizationService _authorizationService;
-   
-   [ObservableProperty] private string _username = string.Empty;
-   [ObservableProperty] private string _email = string.Empty;
-   [ObservableProperty] private string _password = string.Empty;
-   [ObservableProperty] private string _confirmPassword = string.Empty;
-   [ObservableProperty] private bool _isUserAdmin = false;
-   [ObservableProperty] private bool _isCurrentUserAdmin = false;
-   [ObservableProperty] private bool _isLoading;
-   [ObservableProperty] private string _errorMessage = string.Empty;
-   [ObservableProperty] private bool _isSuccess = false;
-   
-   public RegisterUserViewModel(IUserService userService,
-        IAuthorizationService authorizationService)
+    private readonly IUserService _userService;
+    private readonly IAuthorizationService _authorizationService;
+
+    [ObservableProperty] private string _username = string.Empty;
+    [ObservableProperty] private string _email = string.Empty;
+    [ObservableProperty] private string _password = string.Empty;
+    [ObservableProperty] private string _confirmPassword = string.Empty;
+    [ObservableProperty] private bool _isUserAdmin = false;
+    [ObservableProperty] private bool _isCurrentUserAdmin = false;
+    [ObservableProperty] private bool _isLoading;
+    [ObservableProperty] private string _errorMessage = string.Empty;
+    [ObservableProperty] private bool _isSuccess = false;
+
+    public RegisterUserViewModel(IUserService userService,
+        IAuthorizationService authorizationService) : base(authorizationService)
     {
         _userService = userService;
         _authorizationService = authorizationService;
-        
+
         IsCurrentUserAdmin = _authorizationService.IsAdmin();
     }
 
@@ -85,13 +85,13 @@ public partial class RegisterUserViewModel:ViewModelBase
                 return;
             }
 
-            UserRole role = IsUserAdmin? UserRole.SuperAdmin: UserRole.User;
+            UserRole role = IsUserAdmin ? UserRole.SuperAdmin : UserRole.User;
             int userId = await _userService.RegisterAsync(
                 email: Email,
                 username: Username,
                 password: Password,
-                role:role
-                );
+                role: role
+            );
 
             if (userId > 0)
             {

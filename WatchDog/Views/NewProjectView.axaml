@@ -11,30 +11,40 @@
     <ScrollViewer>
         <Grid RowDefinitions="56,*" Background="{DynamicResource BackgroundDarkBrush}">
             <!-- Header -->
-            <controls:HeaderControl Grid.Row="0" PageTitle="Create a new project" NavigateToDashboardCommand="{Binding NavigateToDashboardCommand}"/>
+            <controls:HeaderControl Grid.Row="0" PageTitle="Create a new project"
+                                    NavigateToDashboardCommand="{Binding NavigateToDashboardCommand}" 
+                                    LogOutCommand="{Binding LogoutCommand}"/>
 
-            <Grid Grid.Row="1" Margin="0,24,0,48" 
-                  RowDefinitions="Auto,*"
+            <Grid Grid.Row="1" Margin="0,24,0,48"
+                  RowDefinitions="Auto,Auto,*"
                   ColumnDefinitions="*,460,*">
-                
+                <!-- Error Card -->
+                <Border Grid.Row="0" Grid.Column="1" Classes="CardError"
+                        IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                    <!-- Error message-->
+                    <TextBlock Text="{Binding ErrorMessage}"
+                               Classes="ErrorLabel" />
+                </Border>
+
                 <!-- Main Content -->
-                <Border Grid.Column="1" Grid.Row="0"
+                <Border Grid.Column="1" Grid.Row="1"
                         Classes="Card"
                         CornerRadius="6"
                         Padding="24"
                         Margin="0,0,0,24">
-                    
+
                     <StackPanel Spacing="16">
-                        <TextBlock Text="Create a new project" 
-                                   FontSize="24" 
-                                   FontWeight="SemiBold"/>
-                        
+
+                        <TextBlock Text="Create a new project"
+                                   FontSize="24"
+                                   FontWeight="SemiBold" />
+
                         <!-- Project Details -->
                         <StackPanel Spacing="8">
-                            <TextBlock Text="Owner / Project name" 
+                            <TextBlock Text="Owner          Project name"
                                        FontWeight="SemiBold"
-                                       Margin="0,0,0,4"/>
-                            
+                                       Margin="0,0,0,4" />
+
                             <Grid ColumnDefinitions="Auto,Auto,*">
                                 <Border Grid.Column="0"
                                         Classes="Card"
@@ -42,102 +52,103 @@
                                         Padding="8,6"
                                         CornerRadius="4"
                                         VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding CurrentUser.Username}" 
-                                               VerticalAlignment="Center" 
-                                               FontWeight="Medium"/>
+                                    <TextBlock Text="{Binding CurrentUser.Username}"
+                                               VerticalAlignment="Center"
+                                               FontWeight="Medium" />
                                 </Border>
-                                
-                                <TextBlock Grid.Column="1" 
-                                           Text="/" 
-                                           FontSize="18" 
+
+                                <TextBlock Grid.Column="1"
+                                           Text="/"
+                                           FontSize="18"
                                            FontWeight="SemiBold"
                                            VerticalAlignment="Center"
-                                           Margin="8,0"/>
-                                
-                                <TextBox Grid.Column="2" 
+                                           Margin="8,0" />
+
+                                <TextBox Grid.Column="2"
                                          Text="{Binding ProjectName}"
                                          Watermark="Project name (required)"
-                                         VerticalAlignment="Center"/>
+                                         VerticalAlignment="Center" />
                             </Grid>
-                            
-                            <TextBlock Text="Great project names are short and memorable." 
+
+                            <TextBlock Text="Great project names are short and memorable."
                                        Opacity="0.7"
                                        FontSize="12"
-                                       Margin="0,4,0,0"/>
+                                       Margin="0,4,0,0" />
                         </StackPanel>
-                        
+
                         <!-- Description -->
                         <StackPanel Spacing="8">
-                            <TextBlock Text="Description (optional)" 
-                                       FontWeight="SemiBold"/>
-                            
-                            <TextBox Text="{Binding ProjectDescription}" 
-                                     Height="80" 
+                            <TextBlock Text="Description"
+                                       FontWeight="SemiBold" />
+
+                            <TextBox Text="{Binding ProjectDescription}"
+                                     Height="80"
                                      TextWrapping="Wrap"
-                                     Watermark="A short description of your project"/>
+                                     Watermark="A description of your project" />
                         </StackPanel>
                     </StackPanel>
                 </Border>
-                
+
                 <!-- Team Members Section -->
-                <Border Grid.Column="1" Grid.Row="1"
+                <Border Grid.Column="1" Grid.Row="2"
                         Classes="Card"
                         CornerRadius="6"
                         Padding="24">
-                    
+
                     <StackPanel Spacing="16">
-                        <TextBlock Text="Add team members and assign tasks" 
-                                   FontSize="18" 
-                                   FontWeight="SemiBold"/>
-                        
+                        <TextBlock Text="Add team members and assign tasks"
+                                   FontSize="18"
+                                   FontWeight="SemiBold" />
+
                         <!-- Team Member Selection -->
-                        <Border Classes="Card" 
+                        <Border Classes="Card"
                                 Background="{DynamicResource ContainerDarkerBrush}"
-                                Padding="16" 
+                                Padding="16"
                                 CornerRadius="4">
-                            
+
                             <StackPanel Spacing="12">
                                 <!-- User Search -->
-                                <StackPanel IsVisible="{Binding PendingUser, Converter={x:Static ObjectConverters.IsNull}}">
-                                    <TextBlock Text="Add team member" 
-                                               FontWeight="SemiBold" 
-                                               Margin="0,0,0,8"/>
-                                    
+                                <StackPanel
+                                    IsVisible="{Binding PendingUser, Converter={x:Static ObjectConverters.IsNull}}">
+                                    <TextBlock Text="Add team member"
+                                               FontWeight="SemiBold"
+                                               Margin="0,0,0,8" />
+
                                     <Grid ColumnDefinitions="*,Auto">
                                         <TextBox Grid.Column="0"
                                                  Text="{Binding SearchTerm}"
-                                                 Watermark="Search by username or email"/>
-                                        
+                                                 Watermark="Search by username or email" />
+
                                         <Button Grid.Column="1"
                                                 Command="{Binding SearchUsersCommand}"
                                                 Margin="8,0,0,0"
                                                 Classes="">
-                                            <TextBlock Text="Search"/>
+                                            <TextBlock Text="Search" />
                                         </Button>
                                     </Grid>
-                                    
+
                                     <!-- Search Results -->
                                     <Border IsVisible="{Binding HasSearchResults}"
                                             Classes="Card"
                                             Background="{DynamicResource BackgroundDarkBrush}"
-                                            MaxHeight="200" 
+                                            MaxHeight="200"
                                             Margin="0,8,0,0"
                                             Padding="8">
-                                        
+
                                         <ListBox ItemsSource="{Binding SearchResults}"
                                                  SelectedItem="{Binding SelectedUser}"
                                                  Background="Transparent">
                                             <ListBox.ItemTemplate>
                                                 <DataTemplate>
                                                     <Grid ColumnDefinitions="*,Auto" Margin="0,4">
-                                                        <TextBlock Text="{Binding Username}" 
-                                                                   VerticalAlignment="Center" 
-                                                                   FontWeight="Medium"/>
-                                                        
+                                                        <TextBlock Text="{Binding Username}"
+                                                                   VerticalAlignment="Center"
+                                                                   FontWeight="Medium" />
+
                                                         <Button Grid.Column="1"
                                                                 Command="{Binding $parent[UserControl].((vm:NewProjectViewModel)DataContext).SelectUserForTaskCommand}"
                                                                 Classes="">
-                                                            <TextBlock Text="Select"/>
+                                                            <TextBlock Text="Select" />
                                                         </Button>
                                                     </Grid>
                                                 </DataTemplate>
@@ -145,34 +156,35 @@
                                         </ListBox>
                                     </Border>
                                 </StackPanel>
-                                
+
                                 <!-- Task Assignment -->
-                                <StackPanel IsVisible="{Binding PendingUser, Converter={x:Static ObjectConverters.IsNotNull}}"
-                                            Spacing="8">
-                                    
+                                <StackPanel
+                                    IsVisible="{Binding PendingUser, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                    Spacing="8">
+
                                     <TextBlock>
-                                        <Run Text="Assigning task to: "/>
-                                        <Run Text="{Binding PendingUser.Username}" FontWeight="Bold"/>
+                                        <Run Text="Assigning task to: " />
+                                        <Run Text="{Binding PendingUser.Username}" FontWeight="Bold" />
                                     </TextBlock>
-                                    
+
                                     <TextBox Text="{Binding TaskDescription}"
                                              Watermark="Enter task description (required)"
-                                             Margin="0,4,0,8"/>
-                                    
+                                             Margin="0,4,0,8" />
+
                                     <StackPanel Orientation="Horizontal" Spacing="8">
                                         <Button Command="{Binding AddUserWithTaskCommand}"
                                                 Classes="">
-                                            <TextBlock Text="Add to Team"/>
+                                            <TextBlock Text="Add to Team" />
                                         </Button>
-                                        
+
                                         <Button Command="{Binding CancelAddUserCommand}">
-                                            <TextBlock Text="Cancel"/>
+                                            <TextBlock Text="Cancel" />
                                         </Button>
                                     </StackPanel>
                                 </StackPanel>
                             </StackPanel>
                         </Border>
-                        
+
                         <!-- Team Members List -->
                         <Border Classes="Card"
                                 Background="{DynamicResource ContainerDarkerBrush}"
@@ -180,51 +192,51 @@
                                 MinHeight="100"
                                 Padding="16"
                                 IsVisible="{Binding TeamMembers.Count}">
-                            
+
                             <StackPanel>
-                                <TextBlock Text="Team members and assigned tasks" 
-                                           FontWeight="SemiBold" 
-                                           Margin="0,0,0,12"/>
-                                
+                                <TextBlock Text="Team members and assigned tasks"
+                                           FontWeight="SemiBold"
+                                           Margin="0,0,0,12" />
+
                                 <ItemsControl ItemsSource="{Binding TeamMembers}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <Expander Header="{Binding Member.Username}" 
+                                            <Expander Header="{Binding Member.Username}"
                                                       Margin="0,4,0,8"
                                                       Background="{DynamicResource BackgroundDarkBrush}"
                                                       CornerRadius="4">
-                                                
+
                                                 <StackPanel Spacing="8" Margin="8">
                                                     <ItemsControl ItemsSource="{Binding TaskDescriptions}">
                                                         <ItemsControl.ItemTemplate>
                                                             <DataTemplate>
                                                                 <Grid ColumnDefinitions="*,Auto" Margin="0,4">
-                                                                    <TextBlock Text="{Binding}" 
-                                                                               TextWrapping="Wrap"/>
-                                                                    
+                                                                    <TextBlock Text="{Binding}"
+                                                                               TextWrapping="Wrap" />
+
                                                                     <Button Grid.Column="1"
                                                                             Command="{Binding $parent[UserControl].((vm:NewProjectViewModel)DataContext).RemoveTaskCommand}"
                                                                             CommandParameter="{Binding}"
                                                                             Classes="">
-                                                                        <TextBlock Text="✕"/>
+                                                                        <TextBlock Text="✕" />
                                                                     </Button>
                                                                 </Grid>
                                                             </DataTemplate>
                                                         </ItemsControl.ItemTemplate>
                                                     </ItemsControl>
-                                                    
+
                                                     <!-- Add additional task -->
                                                     <Grid ColumnDefinitions="*,Auto" Margin="0,8,0,0">
                                                         <TextBox Grid.Column="0"
                                                                  Watermark="Add another task for this team member"
-                                                                 Text="{Binding $parent[UserControl].((vm:NewProjectViewModel)DataContext).TaskDescription}"/>
-                                                        
+                                                                 Text="{Binding $parent[UserControl].((vm:NewProjectViewModel)DataContext).TaskDescription}" />
+
                                                         <Button Grid.Column="1"
                                                                 Command="{Binding $parent[UserControl].((vm:NewProjectViewModel)DataContext).AddTaskToTeamMemberCommand}"
                                                                 CommandParameter="{Binding}"
                                                                 Margin="8,0,0,0"
                                                                 Classes="">
-                                                            <TextBlock Text="Add Task"/>
+                                                            <TextBlock Text="Add Task" />
                                                         </Button>
                                                     </Grid>
                                                 </StackPanel>
@@ -234,32 +246,24 @@
                                 </ItemsControl>
                             </StackPanel>
                         </Border>
-                        
-                        <!-- Error message -->
-                        <TextBlock Text="{Binding ErrorMessage}"
-                                   Foreground="#E74C3C"
-                                   IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                                   TextWrapping="Wrap"/>
-                        
-                        <!-- Create Project Button -->
-                        <Button Command="{Binding CreateProjectCommand}"
-                                IsEnabled="{Binding ProjectName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                                HorizontalAlignment="Right"
-                                Classes=""
-                                Padding="16,8">
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <TextBlock Text="Create project" FontWeight="SemiBold"/>
-                            </StackPanel>
-                        </Button>
-                        
+
                         <TextBlock Text="This will create a new project with the specified team members and tasks."
                                    Opacity="0.7"
                                    FontSize="12"
                                    HorizontalAlignment="Right"
-                                   Margin="0,4,0,0"/>
+                                   Margin="0,4,0,0" />
+                        <!-- Create Project Button -->
+                        <Button Command="{Binding CreateProjectCommand}"
+                                HorizontalAlignment="Right"
+                                Classes="PrimaryButton"
+                                Content="Create project" />
                     </StackPanel>
+
                 </Border>
+
             </Grid>
+
         </Grid>
+
     </ScrollViewer>
 </UserControl>

@@ -92,7 +92,7 @@ public partial class LoginViewModel : ViewModelBase
             var addr = new System.Net.Mail.MailAddress(email);
             return addr.Address == email;
         }
-        catch (Exception e)
+        catch (Exception)
         {
             return false;
         }

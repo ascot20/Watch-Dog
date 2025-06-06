@@ -22,14 +22,15 @@ public partial class NewProjectViewModel : ViewModelBase
     [ObservableProperty] private string _projectName = string.Empty;
     [ObservableProperty] private string _projectDescription = string.Empty;
     [ObservableProperty] private string _taskDescription = string.Empty;
-    [ObservableProperty] private bool _isLoading = false;
-    [ObservableProperty] private bool _hasSearchResults = false;
+    [ObservableProperty] private bool _isLoading;
+    [ObservableProperty] private bool _hasSearchResults;
     [ObservableProperty] private string _errorMessage = string.Empty;
     [ObservableProperty] private User? _currentUser;
     [ObservableProperty] private User? _pendingUser;
 
     public NewProjectViewModel(IUserService userService, IProjectService projectService,
-        ISessionService sessionService, ITaskService taskService) 
+        ISessionService sessionService, IAuthorizationService authorizationService, ITaskService taskService)
+        : base(authorizationService)
     {
         _userService = userService;
         _projectService = projectService;
@@ -131,7 +132,7 @@ public partial class NewProjectViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void RemoveUserFromTeam(TeamMemberTaskViewModel teamMember)
+    private void RemoveUserFromTeam(TeamMemberTaskViewModel? teamMember)
     {
         if (teamMember != null)
         {
@@ -140,7 +141,7 @@ public partial class NewProjectViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void AddTaskToTeamMember(TeamMemberTaskViewModel teamMember)
+    private void AddTaskToTeamMember(TeamMemberTaskViewModel? teamMember)
     {
         if (string.IsNullOrWhiteSpace(TaskDescription))
         {
@@ -156,7 +157,7 @@ public partial class NewProjectViewModel : ViewModelBase
             ErrorMessage = string.Empty;
         }
     }
-    
+
     [RelayCommand]
     private void RemoveTask(string taskDescription)
     {
@@ -165,18 +166,18 @@ public partial class NewProjectViewModel : ViewModelBase
             if (teamMember.TaskDescriptions.Contains(taskDescription))
             {
                 teamMember.TaskDescriptions.Remove(taskDescription);
-               
+
                 //if this was the last task, remove the team member
                 if (teamMember.TaskDescriptions.Count == 0)
                 {
                     TeamMembers.Remove(teamMember);
                 }
-                
+
                 break;
             }
         }
     }
-    
+
     [RelayCommand]
     private async System.Threading.Tasks.Task CreateProjectAsync()
     {
@@ -197,24 +198,24 @@ public partial class NewProjectViewModel : ViewModelBase
             IsLoading = true;
             ErrorMessage = string.Empty;
 
-            
+
             // Call the project service to create the project
             int projectId = await _projectService.CreateProjectAsync(ProjectName, ProjectDescription);
-            
+
             // Add the current user and all team members to the project
-            await _projectService.AddUserToProjectAsync(projectId, CurrentUser.Id);
-              
+            await _projectService.AddUserToProjectAsync(projectId, CurrentUser!.Id);
+
             foreach (var teamMember in TeamMembers)
             {
-                await _projectService.AddUserToProjectAsync( projectId,teamMember.Member.Id);
-                
+                await _projectService.AddUserToProjectAsync(projectId, teamMember.Member.Id);
+
                 // Create tasks for this team member
                 foreach (var taskDescription in teamMember.TaskDescriptions)
                 {
-                    await _taskService.CreateTaskAsync(taskDescription,projectId,teamMember.Member.Id);
+                    await _taskService.CreateTaskAsync(taskDescription, projectId, teamMember.Member.Id);
                 }
             }
-            
+
             NavigateToDashboard();
         }
         catch (Exception e)
@@ -226,7 +227,7 @@ public partial class NewProjectViewModel : ViewModelBase
             IsLoading = false;
         }
     }
-    
+
     [RelayCommand]
     private void CancelAddUser()
     {
@@ -234,6 +235,4 @@ public partial class NewProjectViewModel : ViewModelBase
         TaskDescription = string.Empty;
         ErrorMessage = string.Empty;
     }
-
-
 }

@@ -18,5 +18,29 @@
                 <Setter Property="Padding" Value="20"/>
                 <Setter Property="Margin" Value="0,0,0,0"/>
         </Style>
+        
+        <Style Selector="Border.CardError">
+                <Setter Property="Background" Value="{DynamicResource ErrorBackgroundBrush}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource ErrorBorderBrush}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="CornerRadius" Value="6"/>
+                <Setter Property="Padding" Value="16"/>
+                <Setter Property="Margin" Value="0,0,0,8"/>
+        </Style>
+        
+        <!-- status borders -->
+        <Style Selector="Border.NotStarted">
+                <Setter Property="Background" Value="{DynamicResource NotStartedBrush}"/>
+        </Style>
+        <Style Selector="Border.InProgress">
+                <Setter Property="Background" Value="{DynamicResource InProgressBrush}"/>
+        </Style>
+        <Style Selector="Border.Completed">
+                <Setter Property="Background" Value="{DynamicResource CompletedBrush}"/>
+        </Style>
+        <Style Selector="Border.Closed">
+                <Setter Property="Background" Value="{DynamicResource ClosedBrush}"/>
+        </Style>
+
  
 </Styles>

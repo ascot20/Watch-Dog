@@ -20,8 +20,15 @@
 
             <!-- Sign in header -->
             <TextBlock Text="Sign in to WatchDog"
-                       Classes="Heading" />
+                       Classes="Heading" 
+                       HorizontalAlignment="Center"/>
 
+            <!-- Error Card -->
+            <Border Classes="CardError" IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                <!-- Error message-->
+                <TextBlock Text="{Binding ErrorMessage}"
+                           Classes="ErrorLabel"/>
+            </Border>
             <!-- Login form box -->
             <Border Background="{DynamicResource ContainerDarkBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
@@ -29,11 +36,6 @@
                     CornerRadius="6"
                     Padding="20">
                 <StackPanel>
-                    <!-- Error message-->
-                    <TextBlock Text="{Binding ErrorMessage}"
-                               Classes="ErrorMessage"
-                               IsVisible="{Binding !!ErrorMessage}" />
-
                     <!-- Username input -->
                     <TextBlock Text="Email address"
                                Classes="Label" />
