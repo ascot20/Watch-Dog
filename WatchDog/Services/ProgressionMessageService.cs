@@ -20,34 +20,21 @@ public class ProgressionMessageService : IProgressionMessageService
     {
         this.ValidateMessage(message);
 
-        try
-        {
-            var newMessage = new ProgressionMessage
-            {
-                Content = message,
-                TaskId = taskId,
-                AuthorId = creatorId,
-            };
 
-            return await _progressionMessageRepository.CreateAsync(newMessage);
-        }
-        catch (Exception e)
+        var newMessage = new ProgressionMessage
         {
-            throw new Exception($"Error creating progression message: {e.Message}", e);
-        }
+            Content = message,
+            TaskId = taskId,
+            AuthorId = creatorId,
+        };
+
+        return await _progressionMessageRepository.CreateAsync(newMessage);
     }
 
     public Task<IEnumerable<ProgressionMessage>> GetByTaskIdAsync(int taskId)
     {
-        try
-        {
-            var messages = _progressionMessageRepository.GetByTaskIdAsync(taskId);
-            return messages;
-        }
-        catch (Exception e)
-        {
-          throw new Exception($"Error retrieving progression messages for subtask ID {taskId}: {e.Message}", e); 
-        }
+        var messages = _progressionMessageRepository.GetByTaskIdAsync(taskId);
+        return messages;
     }
 
     private void ValidateMessage(string message)

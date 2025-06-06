@@ -101,23 +101,15 @@ public class UserService : IUserService
 
     public async Task<User?> GetUserAsync(int id)
     {
-        try
-        {
-            var user = await _userRepository.GetByIdAsync(id);
+        var user = await _userRepository.GetByIdAsync(id);
 
-            if (user != null)
-            {
-                user.AssignedTasks = (await _taskService.GetByAssignedUserIdAsync(id)).ToList();
-                user.UserProjects = (await _userProjectRepository.GetProjectsByUserIdAsync(id)).ToList();
-            }
-
-            return user;
-        }
-        catch (Exception e)
+        if (user != null)
         {
-            Console.WriteLine(e);
-            throw;
+            user.AssignedTasks = (await _taskService.GetByAssignedUserIdAsync(id)).ToList();
+            user.UserProjects = (await _userProjectRepository.GetProjectsByUserIdAsync(id)).ToList();
         }
+
+        return user;
     }
 
     public async Task<IEnumerable<User>> SearchUsersAsync(string searchTerm)
@@ -132,33 +124,19 @@ public class UserService : IUserService
 
     public async Task<string> GetUserNameAsync(int id)
     {
-        try
+        var user = await _userRepository.GetByIdAsync(id);
+        if (user == null)
         {
-            var user = await _userRepository.GetByIdAsync(id);
-            if (user == null)
-            {
-                throw new ArgumentException($"User with ID {id} does not exist");
-            }
+            throw new ArgumentException($"User with ID {id} does not exist");
+        }
 
-            return user.Username;
-        }
-        catch (Exception e)
-        {
-            throw new Exception($"Error retrieving username for user ID {id}: {e.Message}", e);
-        }
+        return user.Username;
     }
 
     public async Task<IEnumerable<User>> GetAllAsync()
     {
-        try
-        {
-            var users = await _userRepository.GetAllAsync();
-            return users;
-        }
-        catch (Exception e)
-        {
-            throw new Exception($"Error getting all users: {e.Message}");
-        }
+        var users = await _userRepository.GetAllAsync();
+        return users;
     }
 
 
@@ -179,41 +157,28 @@ public class UserService : IUserService
             throw new ArgumentException("New password must be different from the old password", nameof(newPassword));
         }
 
-        try
+
+        var user = await _userRepository.GetByIdAsync(userId);
+
+        if (user == null)
         {
-            var user = await _userRepository.GetByIdAsync(userId);
-
-            if (user == null)
-            {
-                return false;
-            }
-
-            if (!BCrypt.Net.BCrypt.Verify(oldPassword, user.PasswordHash))
-            {
-                return false;
-            }
-
-            string newPasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
-            user.PasswordHash = newPasswordHash;
-
-            return await _userRepository.UpdateAsync(user);
+            return false;
         }
-        catch (Exception e)
+
+        if (!BCrypt.Net.BCrypt.Verify(oldPassword, user.PasswordHash))
         {
-            throw new Exception($"Error changing password: {e.Message}");
+            return false;
         }
+
+        string newPasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
+        user.PasswordHash = newPasswordHash;
+
+        return await _userRepository.UpdateAsync(user);
     }
 
     public async Task<bool> UserExistsAsync(int userId)
     {
-        try
-        {
-            var user = await _userRepository.GetByIdAsync(userId);
-            return user != null;
-        }
-        catch (Exception e)
-        {
-            throw new Exception($"Error checking if user exists: {e.Message}");
-        }
+        var user = await _userRepository.GetByIdAsync(userId);
+        return user != null;
     }
 }

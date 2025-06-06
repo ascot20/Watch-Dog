@@ -28,84 +28,75 @@ public class TimeLineMessageService : ITimeLineMessageService
     {
         this.ValidateMessage(message);
 
-        try
-        {
-            var newMessage = new TimeLineMessage
-            {
-                Content = message,
-                Type = type,
-                IsPinned = isPinned,
-                ProjectId = projectId,
-                AuthorId = creatorId
-            };
 
-            return await _timeLineMessageRepository.CreateAsync(newMessage);
-        }
-        catch (Exception e)
+        var newMessage = new TimeLineMessage
         {
-            throw new Exception($"Error creating timeline message: {e.Message}", e);
-        }
+            Content = message,
+            Type = type,
+            IsPinned = isPinned,
+            ProjectId = projectId,
+            AuthorId = creatorId
+        };
+
+        return await _timeLineMessageRepository.CreateAsync(newMessage);
     }
 
     public async Task<TimeLineMessage?> GetMessageAsync(int messageId)
     {
-        
-            var message = await _timeLineMessageRepository.GetByIdAsync(messageId);
+        var message = await _timeLineMessageRepository.GetByIdAsync(messageId);
 
-            return message;
+        return message;
     }
 
     public async Task<IEnumerable<TimeLineMessage>> GetMessagesByProjectIdAsync(int projectId)
     {
-       
-            var messages = await _timeLineMessageRepository.GetByProjectIdAsync(projectId);
-            return messages;
+        var messages = await _timeLineMessageRepository.GetByProjectIdAsync(projectId);
+        return messages;
     }
 
     public async Task<bool> UpdateMessageAsync(int messageId, MessageType type, bool isPinned)
     {
-       
-            var existingMessage = await _timeLineMessageRepository.GetByIdAsync(messageId);
-            if (existingMessage == null)
-            {
-                return false;
-            }
-
-            if (type != existingMessage.Type || isPinned != existingMessage.IsPinned)
-            {
-                existingMessage.Type = type;
-                existingMessage.IsPinned = isPinned;
-                await _timeLineMessageRepository.UpdateAsync(existingMessage);
-                return true;
-            }
-
+        var existingMessage = await _timeLineMessageRepository.GetByIdAsync(messageId);
+        if (existingMessage == null)
+        {
             return false;
+        }
+
+        if (type != existingMessage.Type || isPinned != existingMessage.IsPinned)
+        {
+            existingMessage.Type = type;
+            existingMessage.IsPinned = isPinned;
+            await _timeLineMessageRepository.UpdateAsync(existingMessage);
+            return true;
+        }
+
+        return false;
     }
 
     public async Task<bool> DeleteMessageAsync(int messageId)
     {
-            var message = await _timeLineMessageRepository.GetByIdAsync(messageId);
-            if (message == null)
-            {
-                return false;
-            }
+        var message = await _timeLineMessageRepository.GetByIdAsync(messageId);
+        if (message == null)
+        {
+            return false;
+        }
 
-            int currentUserId = _authorizationService.GetCurrentUserId();
-            bool isAdmin = _authorizationService.IsAdmin();
+        int currentUserId = _authorizationService.GetCurrentUserId();
+        bool isAdmin = _authorizationService.IsAdmin();
 
-            if (!isAdmin && message.AuthorId != currentUserId)
-            {
-                throw new UnauthorizedAccessException($"You are not authorized to delete message with ID {messageId}");
-            }
+        if (!isAdmin && message.AuthorId != currentUserId)
+        {
+            throw new UnauthorizedAccessException($"You are not authorized to delete message with ID {messageId}");
+        }
 
-            await _timeLineMessageRepository.DeleteAsync(messageId);
-            return true;
+        await _timeLineMessageRepository.DeleteAsync(messageId);
+        return true;
     }
 
     public async Task<bool> MessageExistsAsync(int messageId)
     {
-            var message = await _timeLineMessageRepository.GetByIdAsync(messageId);
-            return message != null;
+        var message = await _timeLineMessageRepository.GetByIdAsync(messageId);
+        return message != null;
     }
 
     private void ValidateMessage(string message)

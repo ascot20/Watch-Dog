@@ -36,7 +36,7 @@ public class ProjectService : IProjectService
     public async Task<int> CreateProjectAsync(string title, string description)
     {
         this.EnsureAdminAccess();
-        
+
         if (string.IsNullOrWhiteSpace(title))
         {
             throw new ArgumentException("Project title cannot be empty");
@@ -45,9 +45,9 @@ public class ProjectService : IProjectService
         bool titleExists = await _projectRepository.ExistsByTitleAsync(title);
         if (titleExists)
         {
-            throw new ArgumentException("A project with the same title already exists");       
+            throw new ArgumentException("A project with the same title already exists");
         }
-        
+
 
         var newProject = new Project
         {
@@ -71,24 +71,17 @@ public class ProjectService : IProjectService
 
     public async Task<Project?> GetProjectAsync(int projectId)
     {
-        try
-        {
-            var project = await _projectRepository.GetByIdAsync(projectId);
+        var project = await _projectRepository.GetByIdAsync(projectId);
 
-            if (project != null)
-            {
-                project.Tasks = (await _taskService.GetByProjectIdAsync(projectId)).ToList();
-                project.TimeLineMessages =
-                    (await _timeLineMessageService.GetMessagesByProjectIdAsync(projectId)).ToList();
-                project.ProjectMembers = (await _userProjectRepository.GetUsersByProjectIdAsync(projectId)).ToList();
-            }
-
-            return project;
-        }
-        catch (Exception e)
+        if (project != null)
         {
-            throw new Exception($"Error retrieving project: {e.Message}");
+            project.Tasks = (await _taskService.GetByProjectIdAsync(projectId)).ToList();
+            project.TimeLineMessages =
+                (await _timeLineMessageService.GetMessagesByProjectIdAsync(projectId)).ToList();
+            project.ProjectMembers = (await _userProjectRepository.GetUsersByProjectIdAsync(projectId)).ToList();
         }
+
+        return project;
     }
 
     public async Task<bool> UpdateProjectAsync(
@@ -97,21 +90,21 @@ public class ProjectService : IProjectService
     {
         this.EnsureAdminAccess();
 
-            var projectToUpdate = await this.GetProjectOrThrowAsync(projectId);
-            projectToUpdate.Status = status;
-            
-            if (status == ProjectStatus.Completed)
-            {
-                await _timeLineMessageService.CreateMessageAsync(
-                    projectId: projectId,
-                    message: $"Project '{projectToUpdate.Title}' has been marked as completed",
-                    type: MessageType.Milestone,
-                    isPinned: false,
-                    creatorId: _authorizationService.GetCurrentUserId()
-                );
-            }
+        var projectToUpdate = await this.GetProjectOrThrowAsync(projectId);
+        projectToUpdate.Status = status;
 
-            return await _projectRepository.UpdateAsync(projectToUpdate);
+        if (status == ProjectStatus.Completed)
+        {
+            await _timeLineMessageService.CreateMessageAsync(
+                projectId: projectId,
+                message: $"Project '{projectToUpdate.Title}' has been marked as completed",
+                type: MessageType.Milestone,
+                isPinned: false,
+                creatorId: _authorizationService.GetCurrentUserId()
+            );
+        }
+
+        return await _projectRepository.UpdateAsync(projectToUpdate);
     }
 
 
@@ -119,17 +112,11 @@ public class ProjectService : IProjectService
     {
         this.EnsureAdminAccess();
 
-        try
-        {
-            await this.GetProjectOrThrowAsync(projectId);
 
-            await _projectRepository.DeleteAsync(projectId);
-            return true;
-        }
-        catch (Exception e)
-        {
-            throw new Exception($"Error deleting project: {e.Message}");
-        }
+        await this.GetProjectOrThrowAsync(projectId);
+
+        await _projectRepository.DeleteAsync(projectId);
+        return true;
     }
 
 
@@ -137,98 +124,72 @@ public class ProjectService : IProjectService
     {
         this.EnsureAdminAccess();
 
-        try
+
+        await this.GetProjectOrThrowAsync(projectId);
+        bool result = await _userProjectRepository.AddAsync(userId, projectId);
+
+        if (result)
         {
-            await this.GetProjectOrThrowAsync(projectId);
-            bool result = await _userProjectRepository.AddAsync(userId, projectId);
+            string addedUsername = await _userService.GetUserNameAsync(userId);
 
-            if (result)
-            {
-                string addedUsername = await _userService.GetUserNameAsync(userId);
+            string message = !string.IsNullOrEmpty(addedUsername)
+                ? $"{addedUsername} has been added to the project"
+                : "A new team member has been added to the project";
 
-                string message = !string.IsNullOrEmpty(addedUsername)
-                    ? $"{addedUsername} has been added to the project"
-                    : "A new team member has been added to the project";
-
-                await _timeLineMessageService.CreateMessageAsync(
-                    projectId: projectId,
-                    message: message,
-                    type: MessageType.Update,
-                    creatorId: _authorizationService.GetCurrentUserId()
-                );
-            }
-
-            return result;
+            await _timeLineMessageService.CreateMessageAsync(
+                projectId: projectId,
+                message: message,
+                type: MessageType.Update,
+                creatorId: _authorizationService.GetCurrentUserId()
+            );
         }
-        catch (Exception e)
-        {
-            throw new Exception($"Error adding user to project: {e.Message}");
-        }
+
+        return result;
     }
 
     public async Task<bool> RemoveUserFromProjectAsync(int projectId, int userId)
     {
         this.EnsureAdminAccess();
 
-        try
+
+        await this.GetProjectOrThrowAsync(projectId);
+
+        var userTasks = (await _taskService.GetByAssignedUserIdAsync(userId))
+            .Where(t => t.ProjectId == projectId);
+
+        foreach (var task in userTasks)
         {
-            await this.GetProjectOrThrowAsync(projectId);
-
-            var userTasks = (await _taskService.GetByAssignedUserIdAsync(userId))
-                .Where(t => t.ProjectId == projectId);
-
-            foreach (var task in userTasks)
-            {
-                // Reassign to project creator
-                task.AssignedUserId = _authorizationService.GetCurrentUserId();
-                await _taskService.UpdateTaskAsync(taskId: task.Id, assignedUserId: task.AssignedUserId);
-            }
-
-            // Remove the user from the project
-            bool result = await _userProjectRepository.RemoveAsync(projectId, userId);
-
-            if (result)
-            {
-                await _timeLineMessageService.CreateMessageAsync(
-                    projectId: projectId,
-                    message: "A team member has been removed from the project",
-                    type: MessageType.Update,
-                    creatorId: _authorizationService.GetCurrentUserId()
-                );
-            }
-
-            return result;
+            // Reassign to project creator
+            task.AssignedUserId = _authorizationService.GetCurrentUserId();
+            await _taskService.UpdateTaskAsync(taskId: task.Id, assignedUserId: task.AssignedUserId);
         }
-        catch (Exception e)
+
+        // Remove the user from the project
+        bool result = await _userProjectRepository.RemoveAsync(projectId, userId);
+
+        if (result)
         {
-            throw new Exception($"Error removing user from project: {e.Message}");
+            await _timeLineMessageService.CreateMessageAsync(
+                projectId: projectId,
+                message: "A team member has been removed from the project",
+                type: MessageType.Update,
+                creatorId: _authorizationService.GetCurrentUserId()
+            );
         }
+
+        return result;
     }
 
     public async Task<IEnumerable> GetAllProjectsAsync()
     {
-        try
-        {
-            var projects = await _projectRepository.GetAllAsync();
-            return projects;
-        }
-        catch (Exception e)
-        {
-            throw new Exception($"Error retrieving all projects: {e.Message}");
-        }
+        var projects = await _projectRepository.GetAllAsync();
+        return projects;
     }
 
     public async Task<bool> ProjectExistsAsync(int projectId)
     {
-        try
-        {
-            var project = await _projectRepository.GetByIdAsync(projectId);
-            return project != null;
-        }
-        catch (Exception e)
-        {
-            throw new Exception($"Error checking if project exists: {e.Message}");
-        }
+        var project = await _projectRepository.GetByIdAsync(projectId);
+        return project != null;
     }
 
     private void EnsureAdminAccess()
