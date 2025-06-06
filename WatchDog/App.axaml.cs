@@ -4,6 +4,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core.Plugins;
 using System.Linq;
 using Avalonia.Markup.Xaml;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using WatchDog.Data.Factories;
 using WatchDog.Data.Repositories;
@@ -30,7 +31,8 @@ public partial class App : Application
             // More info: https://docs.avaloniaui.net/docs/guides/development-guides/data-validation#manage-validationplugins
             DisableAvaloniaDataAnnotationValidation();
             var services = new ServiceCollection();
-            ConfigureServices(services);
+            var configuration = BuildConfiguration();
+            ConfigureServices(services, configuration);
             ServiceProvider = services.BuildServiceProvider();
             
             desktop.MainWindow = new MainWindow();
@@ -39,6 +41,17 @@ public partial class App : Application
         }
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+    private IConfiguration BuildConfiguration()
+    {
+        var builder = new ConfigurationBuilder()
+            .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
+            .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+            .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production"}.json", optional: true, reloadOnChange:true)
+            .AddEnvironmentVariables();
+        
+        return builder.Build();
     }
 
     private void DisableAvaloniaDataAnnotationValidation()
@@ -54,10 +67,14 @@ public partial class App : Application
         }
     }
 
-    private void ConfigureServices(IServiceCollection services)
+    private void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
+        services.AddSingleton<IConfiguration>(configuration);
+        
+        var connectionString = configuration.GetConnectionString("DefaultConnection");
+        
         services.AddSingleton<IDbConnectionFactory>(provider => 
-            new PostDbConnectionFactory("Host=localhost;Port=5432;Database=watchdog_db;Username=watchdog;Password=xyzwatchdog"));
+            new PostDbConnectionFactory(connectionString));
 
         services.AddSingleton<IUserRepository, UserRepository>();
         services.AddSingleton<IUserProjectRepository, UserProjectRepository>();

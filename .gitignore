@@ -11,7 +11,8 @@
 *.sln.docstates
 .vs/
 db_password.txt
-
+appsettings.json
+appsettings.Production.json
 # Build results
 
 *.sln.ide/
