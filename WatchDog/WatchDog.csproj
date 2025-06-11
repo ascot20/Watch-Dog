@@ -30,7 +30,7 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.0-preview.4.25258.110" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0-preview.4.25258.110" />
     <PackageReference Include="Npgsql" Version="9.0.3" />
-    <None Update="appsettings.json">
+    <None Update="appsettings.Development.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   <None Update="appsettings.Production.json">
